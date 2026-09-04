@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260904_2204 copa-gs-v9 -->
+<!-- Build: 20260904_2211 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -3797,39 +3797,37 @@ function SyncFirebase() {
   const {
     state
   } = useCopa();
-  const [status, setStatus] = React.useState('idle'); // idle | syncing | ok | error
+  const [status, setStatus] = React.useState('idle');
   const [msg, setMsg] = React.useState('');
-  const sync = async () => {
+  const sync = () => {
     setStatus('syncing');
     setMsg('Conectando ao Firebase...');
-    try {
-      // Inicializa Firebase se necessário
-      if (!window._initFirebase) {
-        setStatus('error');
-        setMsg('Firebase não disponível neste ambiente.');
-        return;
-      }
-      const ok = await window._initFirebase();
-      if (!ok) {
-        setStatus('error');
-        setMsg('Não foi possível conectar ao Firebase. Verifique a conexão.');
-        return;
-      }
+
+    // Usa Promise chain em vez de async/await para evitar crash no React
+    Promise.resolve().then(() => {
+      if (!window._initFirebase) throw new Error('Firebase indisponível. Acesse pelo link do GitHub Pages.');
+      return window._initFirebase();
+    }).then(ok => {
+      if (!ok) throw new Error('Não foi possível conectar. Verifique a internet.');
+      if (!window._fbDb) throw new Error('Banco de dados não inicializado.');
       setMsg('Enviando dados...');
-      // Salva diretamente, sem verificar _fbAdminMode
-      await window._fbDb.collection('copa').doc('estado').set({
-        state: state
+      // Serializa e desserializa para garantir objeto puro (sem referências React)
+      const stateStr = JSON.stringify(state);
+      const statePuro = JSON.parse(stateStr);
+      return window._fbDb.collection('copa').doc('estado').set({
+        state: statePuro
       });
+    }).then(() => {
       setStatus('ok');
-      setMsg('Dados sincronizados com sucesso! Todos os visitantes verão os dados atualizados.');
+      setMsg('✓ Sincronizado com sucesso! Visitantes verão os dados atualizados.');
       setTimeout(() => {
         setStatus('idle');
         setMsg('');
-      }, 6000);
-    } catch (e) {
+      }, 8000);
+    }).catch(e => {
       setStatus('error');
-      setMsg('Erro: ' + e.message);
-    }
+      setMsg('Erro: ' + (e && e.message ? e.message : String(e)));
+    });
   };
   return /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3839,22 +3837,19 @@ function SyncFirebase() {
       padding: '14px 16px'
     }
   }, /*#__PURE__*/React.createElement("div", {
-    className: "rowsb",
-    style: {
-      marginBottom: 8
-    }
+    className: "rowsb"
   }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       fontWeight: 700,
       fontSize: 13,
       marginBottom: 2
     }
-  }, "Firebase"), /*#__PURE__*/React.createElement("div", {
+  }, "☁ Firebase"), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: 'var(--muted)'
     }
-  }, "Sincronize para que os visitantes vejam os dados em tempo real")), /*#__PURE__*/React.createElement("button", {
+  }, "Sincronize para atualizar os dados para todos os visitantes")), /*#__PURE__*/React.createElement("button", {
     className: "btn btn-gold btn-sm",
     onClick: sync,
     disabled: status === 'syncing',
@@ -3862,10 +3857,9 @@ function SyncFirebase() {
       flexShrink: 0,
       marginLeft: 12
     }
-  }, status === 'syncing' ? 'Enviando...' : '☁ Sincronizar')), msg && /*#__PURE__*/React.createElement("div", {
-    className: "alert " + (status === 'ok' ? 'alert-green' : status === 'error' ? 'alert-orange' : 'alert-info'),
+  }, status === 'syncing' ? 'Enviando...' : 'Sincronizar')), msg && /*#__PURE__*/React.createElement("div", {
+    className: "alert mt2 " + (status === 'ok' ? 'alert-green' : status === 'error' ? 'alert-orange' : 'alert-info'),
     style: {
-      marginTop: 8,
       fontSize: 12
     }
   }, msg));
