@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260904_2234 copa-gs-v9 -->
+<!-- Build: 20260904_2249 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -3837,6 +3837,78 @@ function Jogos() {
   }));
 }
 
+// ── BotaoSync ─────────────────────────────────────────────────────────────────
+function BotaoSync({
+  state
+}) {
+  const [status, setStatus] = React.useState('idle');
+  const [msg, setMsg] = React.useState('');
+  const sync = async () => {
+    setStatus('syncing');
+    setMsg('Conectando...');
+    try {
+      var ok = await window._initFirebase();
+      if (!ok) {
+        setStatus('error');
+        setMsg('Firebase indisponível. Verifique a conexão.');
+        return;
+      }
+      setMsg('Enviando dados...');
+      await window._fbDb.collection('copa').doc('estado').set({
+        state: state
+      });
+      setStatus('ok');
+      setMsg('Sincronizado! Todos os visitantes verão os dados atualizados.');
+      setTimeout(() => {
+        setStatus('idle');
+        setMsg('');
+      }, 6000);
+    } catch (e) {
+      setStatus('error');
+      setMsg('Erro: ' + e.message);
+      console.error('[FB] Sync error:', e);
+    }
+  };
+  return /*#__PURE__*/React.createElement("div", {
+    style: {
+      background: 'var(--bg2)',
+      border: '1px solid var(--bg4)',
+      borderRadius: 10,
+      padding: '14px 16px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: 12
+    }
+  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontWeight: 700,
+      fontSize: 13,
+      marginBottom: 2
+    }
+  }, "☁ Firebase"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 11,
+      color: 'var(--muted)'
+    }
+  }, "Envie os dados para que os visitantes vejam em tempo real")), /*#__PURE__*/React.createElement("button", {
+    className: "btn btn-gold btn-sm",
+    onClick: sync,
+    disabled: status === 'syncing',
+    style: {
+      flexShrink: 0
+    }
+  }, status === 'syncing' ? 'Enviando...' : 'Sincronizar')), msg && /*#__PURE__*/React.createElement("div", {
+    className: "alert mt2 " + (status === 'ok' ? 'alert-green' : 'alert-orange'),
+    style: {
+      fontSize: 12
+    }
+  }, msg));
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 function Dashboard({
   setPage
@@ -4056,7 +4128,9 @@ function Dashboard({
     className: "alert alert-warn"
   }, /*#__PURE__*/React.createElement(IcAlert, {
     size: 14
-  }), /*#__PURE__*/React.createElement("span", null, byesN, " BYE", byesN > 1 ? 's' : '', " aguardando confirmação · Verifique a tela Equipes")), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("span", null, byesN, " BYE", byesN > 1 ? 's' : '', " aguardando confirmação · Verifique a tela Equipes")), /*#__PURE__*/React.createElement(BotaoSync, {
+    state: state
+  }), /*#__PURE__*/React.createElement("div", {
     className: "g4"
   }, [{
     l: 'Academias',
