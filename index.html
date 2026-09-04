@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260904_2156 copa-gs-v9 -->
+<!-- Build: 20260904_2204 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -4376,27 +4376,44 @@ function Classificacao() {
       overflow: 'hidden'
     }
   }, /*#__PURE__*/React.createElement("table", {
-    className: "tbl"
-  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "#"), /*#__PURE__*/React.createElement("th", null, "Academia"), /*#__PURE__*/React.createElement("th", {
-    className: "tbl-r"
+    className: "tbl",
+    style: {
+      tableLayout: 'fixed',
+      width: '100%'
+    }
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+    style: {
+      width: 36
+    }
+  }, "#"), /*#__PURE__*/React.createElement("th", null, "Academia"), /*#__PURE__*/React.createElement("th", {
+    style: {
+      width: 40,
+      textAlign: 'right'
+    }
   }, "Pts"), /*#__PURE__*/React.createElement("th", {
-    className: "tbl-r"
+    style: {
+      width: 36,
+      textAlign: 'right'
+    }
   }, "J"), /*#__PURE__*/React.createElement("th", {
-    className: "tbl-r"
+    style: {
+      width: 36,
+      textAlign: 'right'
+    }
   }, "V"), /*#__PURE__*/React.createElement("th", {
-    className: "tbl-r"
-  }, "D"), /*#__PURE__*/React.createElement("th", {
-    className: "tbl-r hide-mobile"
-  }, "±Sets"), /*#__PURE__*/React.createElement("th", {
-    className: "tbl-r hide-mobile"
-  }, "±Games"))), /*#__PURE__*/React.createElement("tbody", null, cl.map((ac, i) => /*#__PURE__*/React.createElement("tr", {
+    style: {
+      width: 36,
+      textAlign: 'right'
+    }
+  }, "D"))), /*#__PURE__*/React.createElement("tbody", null, cl.map((ac, i) => /*#__PURE__*/React.createElement("tr", {
     key: ac.id,
     style: {
       background: i === 0 ? 'rgba(201,168,76,.05)' : ''
     }
   }, /*#__PURE__*/React.createElement("td", {
     style: {
-      fontSize: 16
+      fontSize: 16,
+      textAlign: 'center'
     }
   }, medals[i] || i + 1), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -4421,35 +4438,34 @@ function Classificacao() {
   }, ac.nome[0]), /*#__PURE__*/React.createElement("span", {
     style: {
       fontWeight: i === 0 ? 700 : 500,
-      color: i === 0 ? 'var(--gold)' : 'var(--text)'
+      color: i === 0 ? 'var(--gold)' : 'var(--text)',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap'
     }
   }, ac.nome))), /*#__PURE__*/React.createElement("td", {
-    className: "tbl-r",
     style: {
+      textAlign: 'right',
       fontWeight: 700,
       color: 'var(--gold)',
       fontSize: 15
     }
   }, ac.pts), /*#__PURE__*/React.createElement("td", {
-    className: "tbl-r",
     style: {
+      textAlign: 'right',
       color: 'var(--muted)'
     }
   }, ac.j || 0), /*#__PURE__*/React.createElement("td", {
-    className: "tbl-r",
     style: {
+      textAlign: 'right',
       color: 'var(--green)'
     }
   }, ac.v), /*#__PURE__*/React.createElement("td", {
-    className: "tbl-r",
     style: {
+      textAlign: 'right',
       color: 'var(--red)'
     }
-  }, ac.d), /*#__PURE__*/React.createElement("td", {
-    className: "tbl-r hide-mobile " + (ac.ss >= 0 ? 'tgreen' : 'tred')
-  }, (ac.ss > 0 ? '+' : '') + ac.ss), /*#__PURE__*/React.createElement("td", {
-    className: "tbl-r hide-mobile " + (ac.sg >= 0 ? 'tgreen' : 'tred')
-  }, (ac.sg > 0 ? '+' : '') + ac.sg)))))), /*#__PURE__*/React.createElement("div", {
+  }, ac.d)))))), /*#__PURE__*/React.createElement("div", {
     className: "alert alert-info"
   }, /*#__PURE__*/React.createElement(IcInfo, {
     size: 14
