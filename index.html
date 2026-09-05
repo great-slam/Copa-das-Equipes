@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260905_1706 copa-gs-v9 -->
+<!-- Build: 20260905_1730 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -846,15 +846,21 @@ function CopaProvider({
   children
 }) {
   const [state, setState] = React.useState(loadState);
-  const [isAdmin, setIsAdmin] = React.useState(false);
+  const [isAdmin, setIsAdmin] = React.useState(function(){
+    var admin = sessionStorage.getItem('gs_admin') === '1';
+    window._fbAdminMode = admin;
+    return admin;
+  });
   const loginAdmin = pwd => {
     if (pwd === ADMIN_PWD) {
       setIsAdmin(true);
+      sessionStorage.setItem('gs_admin', '1');
+      window._fbAdminMode = true;
       return true;
     }
     return false;
   };
-  const logoutAdmin = () => setIsAdmin(false);
+  const logoutAdmin = () => { setIsAdmin(false); sessionStorage.removeItem('gs_admin'); window._fbAdminMode = false; };
   const commit = React.useCallback(s => {
     setState(s);
     saveState(s);
