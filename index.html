@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260905_1003 copa-gs-v9 -->
+<!-- Build: 20260905_1020 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -531,77 +531,93 @@ window._saveToFirebase = async function(stateObj) {
 window._checkAdminPassword = function(pwd) { return pwd === 'gs.988721'; };
 </script>
 <script>// Admin mode — Copa das Equipes Great Slam 2026
-window._fbAdminMode = false;
+window._fbListening = false;
+
+// Persiste modo admin na sessão (mantém após reload, some ao fechar aba)
+window._fbAdminMode = sessionStorage.getItem('gs_admin') === '1';
 
 function toggleAdmin() {
   if (window._fbAdminMode) {
     window._fbAdminMode = false;
+    sessionStorage.removeItem('gs_admin');
     return;
   }
   var pwd = prompt('Senha do administrador:');
   if (!pwd) return;
   if (window._checkAdminPassword(pwd)) {
     window._fbAdminMode = true;
+    sessionStorage.setItem('gs_admin', '1');
     alert('Admin ativo.');
   } else {
     alert('Senha incorreta.');
   }
 }
 
-// Carrega Firebase e escuta mudanças — SEM reload automático
-// Visitante recarrega manualmente para ver novidades
+// Compara apenas os resultados das partidas — ignora diferenças de ordem/formatação
+function getResultsSignature(data) {
+  if (!data || !data.partidas) return '';
+  return data.partidas
+    .filter(function(p) { return p.status === 'realizado' || p.status === 'wo'; })
+    .map(function(p) { return p.id + ':' + p.status + ':' + (p.vencedor||'') + ':' + (p.sets1||0) + ':' + (p.sets2||0); })
+    .sort()
+    .join('|');
+}
+
+function getAtletasSignature(data) {
+  if (!data || !data.atletas) return '';
+  return data.atletas
+    .map(function(a) { return a.id + ':' + a.nome + ':' + (a.atStatus||''); })
+    .sort()
+    .join('|');
+}
+
+function getSignature(data) {
+  return getResultsSignature(data) + '##' + getAtletasSignature(data);
+}
+
 async function startFirebaseSync() {
+  if (window._fbListening) return;
   try {
     var ok = await window._initFirebase();
     if (!ok) { console.log('[FB] Offline'); return; }
 
-    // Escuta mudanças em tempo real
+    window._fbListening = true;
+    var localSig = '';
+    try {
+      var localRaw = localStorage.getItem('copa-gs-v9');
+      if (localRaw) localSig = getSignature(JSON.parse(localRaw));
+    } catch(e) {}
+
     window._fbDb.collection('copa').doc('estado')
       .onSnapshot(function(snap) {
         if (!snap.exists) { console.log('[FB] Firestore vazio'); return; }
         if (window._fbAdminMode) return;
 
         var fbData = snap.data().state;
-        if (!fbData || !fbData.partidas) return;
+        if (!fbData) return;
 
-        // Só atualiza se Firebase tiver MAIS resultados que o localStorage atual
-        var fbDone = fbData.partidas.filter(function(p){
-          return p.status === 'realizado' || p.status === 'wo';
-        }).length;
+        var fbSig = getSignature(fbData);
+        console.log('[FB] Comparando assinaturas...');
 
-        var localRaw = localStorage.getItem('copa-gs-v9');
-        var localDone = 0;
-        if (localRaw) {
-          try {
-            localDone = JSON.parse(localRaw).partidas.filter(function(p){
-              return p.status === 'realizado' || p.status === 'wo';
-            }).length;
-          } catch(e) {}
-        }
-
-        var newJ = JSON.stringify(fbData);
-        var curJ = localStorage.getItem('copa-gs-v9') || '';
-
-        console.log('[FB] Firebase: ' + fbDone + ' resultados | Local: ' + localDone);
-
-        if (newJ !== curJ) {
+        if (fbSig !== localSig) {
           console.log('[FB] Mudança detectada — atualizando');
-          localStorage.setItem('copa-gs-v9', newJ);
-          window.location.reload();
+          localSig = fbSig; // atualiza assinatura local ANTES de recarregar
+          localStorage.setItem('copa-gs-v9', JSON.stringify(fbData));
+          setTimeout(function() { window.location.reload(); }, 500);
         } else {
           console.log('[FB] Sem mudanças');
         }
       }, function(err) {
         console.warn('[FB] Listener error:', err);
+        window._fbListening = false;
       });
 
   } catch(e) {
     console.warn('[FB] Erro:', e);
+    window._fbListening = false;
   }
 }
 
-// Expõe promise vazia — React não espera mais o Firebase para renderizar
-// Evita tela em branco quando Firebase está lento
 window._fbInitPromise = Promise.resolve();
 setTimeout(startFirebaseSync, 2000);
 </script>
