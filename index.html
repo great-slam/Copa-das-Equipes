@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260905_0716 copa-gs-v9 -->
+<!-- Build: 20260905_1003 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -579,14 +579,18 @@ async function startFirebaseSync() {
           } catch(e) {}
         }
 
+        var newJ = JSON.stringify(fbData);
+        var curJ = localStorage.getItem('copa-gs-v9') || '';
+
         console.log('[FB] Firebase: ' + fbDone + ' resultados | Local: ' + localDone);
 
-        if (fbDone > localDone) {
-          console.log('[FB] Atualizando com dados mais recentes do Firebase');
-          localStorage.setItem('copa-gs-v9', JSON.stringify(fbData));
+        if (newJ !== curJ) {
+          console.log('[FB] Mudança detectada — atualizando');
+          localStorage.setItem('copa-gs-v9', newJ);
           window.location.reload();
+        } else {
+          console.log('[FB] Sem mudanças');
         }
-        // Se igual ou Firebase menor — não faz nada
       }, function(err) {
         console.warn('[FB] Listener error:', err);
       });
