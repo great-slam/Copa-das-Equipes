@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260905_1730 copa-gs-v9 -->
+<!-- Build: 20260906_0658 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -1212,6 +1212,9 @@ const IcChart = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectS
 const IcCal = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpread({}, p), {}, {
   d: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"
 }));
+const IcDoc = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpread({}, p), {}, {
+  d: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"
+}));
 const IcTrash = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpread({}, p), {}, {
   d: "M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"
 }));
@@ -1289,6 +1292,10 @@ function Layout({
     label: 'Calendário',
     icon: /*#__PURE__*/React.createElement(IcCal, null)
   }, {
+    id: 'regulamento',
+    label: 'Regulamento',
+    icon: /*#__PURE__*/React.createElement(IcDoc, null)
+  }, {
     id: 'estatisticas',
     label: 'Stats',
     icon: /*#__PURE__*/React.createElement(IcChart, null)
@@ -1318,6 +1325,10 @@ function Layout({
     id: 'calendario',
     label: 'Calendário',
     icon: /*#__PURE__*/React.createElement(IcCal, null)
+  }, {
+    id: 'regulamento',
+    label: 'Regulamento',
+    icon: /*#__PURE__*/React.createElement(IcDoc, null)
   }, {
     id: 'estatisticas',
     label: 'Stats',
@@ -5007,6 +5018,157 @@ function Estatisticas() {
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
+function Regulamento() {
+  var[aberto,setAberto] = React.useState(null);
+  var caps = [{
+    num:'I', titulo:'Da Competição',
+    artigos:[
+      {n:'1º', txt:'A COPA DAS EQUIPES – GREAT SLAM é uma competição especial promovida pelo GREAT SLAM, destinada à integração entre atletas, professores, academias, clubes, centros de treinamento, grupos esportivos e demais instituições convidadas pela organização.'},
+      {n:'2º', txt:'A competição será disputada por equipes representativas de instituições oficialmente convidadas pela organização. A participação das instituições ocorrerá exclusivamente mediante convite da organização.'},
+      {n:'3º', txt:'Aplicam-se subsidiariamente à COPA DAS EQUIPES – GREAT SLAM todas as disposições constantes do Regulamento Geral do GREAT SLAM, sempre que compatíveis e inexistente disposição específica neste regulamento.'},
+    ]
+  },{
+    num:'II', titulo:'Das Equipes',
+    artigos:[
+      {n:'4º', txt:'Cada equipe representará uma academia, clube, centro de treinamento, grupo esportivo ou outra instituição convidada pela organização.'},
+      {n:'5º', txt:'Na edição 2026, cada instituição participante deverá indicar 02 (dois) representantes para cada categoria da competição, além de 01 (um) professor, que exercerá a função de Capitão da Equipe. As categorias são: Sub-12, Iniciante, Delta, Gamma, Beta, Alpha, Ômega e Feminina.', obs:'Os atletas do Sub-12 utilizarão bolas STAGE 1 (verde). O Capitão não é obrigado a disputar partidas, podendo ser indicado como representante da categoria Ômega.'},
+      {n:'6º', txt:'Os representantes deverão possuir vínculo com a instituição representada, na condição de: aluno, professor, frequentador habitual ou outra condição reconhecida e validada pela organização.'},
+      {n:'7º', txt:'A indicação dos representantes estará sujeita à validação da organização do GREAT SLAM, que poderá indeferir indicações que não atendam às disposições deste regulamento.'},
+    ]
+  },{
+    num:'III', titulo:'Das Inscrições',
+    artigos:[
+      {n:'8º', txt:'A participação dependerá de inscrição individual junto à organização.'},
+      {n:'9º', txt:'A confirmação da inscrição ocorrerá após a validação da indicação e a quitação da respectiva taxa.'},
+      {n:'10', txt:'A taxa de inscrição será de responsabilidade exclusiva dos atletas participantes. O Professor/Capitão oficialmente indicado ficará isento do pagamento da taxa de inscrição.'},
+    ]
+  },{
+    num:'IV', titulo:'Das Quadras e das Partidas',
+    artigos:[
+      {n:'11', txt:'As partidas serão realizadas dentro do calendário divulgado pela organização.'},
+      {n:'12', txt:'Caberá aos atletas envolvidos promover o agendamento das partidas dentro dos prazos estabelecidos pela organização.'},
+      {n:'13', txt:'As partidas serão realizadas preferencialmente nas quadras das instituições participantes da competição.'},
+      {n:'14', txt:'As despesas relativas à reserva, locação ou utilização das quadras serão de responsabilidade dos atletas participantes da respectiva partida.'},
+      {n:'15', txt:'Todas as partidas serão disputadas em jogos de simples.'},
+      {n:'16', txt:'As partidas observarão o formato oficial do GREAT SLAM: melhor de 3 sets, sets de 6 games, tie-break de 7 pontos em 6x6, sistema No-Ad (sem vantagem), com Super Tie-Break de 10 pontos em substituição ao terceiro set.'},
+    ]
+  },{
+    num:'V', titulo:'Do Sistema de Disputa',
+    artigos:[
+      {n:'17', txt:'Em cada categoria, os representantes serão distribuídos em 02 (dois) grupos, contendo cada grupo 01 (um) atleta de cada instituição participante. Os dois representantes de uma mesma instituição serão obrigatoriamente distribuídos em grupos distintos. Os atletas de cada grupo jogarão entre si pelo sistema todos contra todos. Não haverá fase eliminatória ou final individual por categoria.'},
+      {n:'18', txt:'Antes do início da competição, a organização divulgará: as instituições participantes, a composição das equipes, a distribuição dos atletas nos grupos, os confrontos, o calendário, a premiação e as demais disposições específicas da edição.'},
+    ]
+  },{
+    num:'VI', titulo:'Da Classificação',
+    artigos:[
+      {n:'19', txt:'Cada vitória conquistada por um representante atribuirá 01 (um) ponto à equipe da instituição representada.'},
+      {n:'20', txt:'A classificação da competição será exclusivamente coletiva.'},
+      {n:'21', txt:'Será declarada campeã a equipe da instituição que obtiver o maior número de pontos ao término de todas as partidas da competição.'},
+      {n:'22', txt:'Em caso de empate na classificação final, serão observados, sucessivamente: saldo de sets, saldo de games e sorteio.'},
+    ]
+  },{
+    num:'VII', titulo:'Da Premiação',
+    artigos:[
+      {n:'23', txt:'A instituição campeã receberá o Troféu Oficial da COPA DAS EQUIPES – GREAT SLAM 2026.'},
+      {n:'24', txt:'Todos os integrantes da equipe campeã receberão medalhas oficiais da competição.'},
+      {n:'25', txt:'A organização poderá instituir premiações complementares.'},
+    ]
+  },{
+    num:'VIII', titulo:'Do Direito de Imagem',
+    artigos:[
+      {n:'26', txt:'Os participantes autorizam, gratuitamente, a utilização de sua imagem, voz e nome para fins institucionais, promocionais e publicitários relacionados ao GREAT SLAM.'},
+    ]
+  },{
+    num:'IX', titulo:'Das Disposições Finais',
+    artigos:[
+      {n:'27', txt:'Os casos omissos serão resolvidos pela organização.'},
+      {n:'28', txt:'A interpretação deste regulamento compete exclusivamente à organização do GREAT SLAM.'},
+      {n:'29', txt:'A inscrição na competição implica plena concordância com as disposições deste regulamento e do Regulamento Geral do GREAT SLAM.'},
+    ]
+  }];
+
+  return /*#__PURE__*/React.createElement("div", {className:"space"},
+    /*#__PURE__*/React.createElement("div", {
+      style:{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:10,overflow:'hidden'}
+    },
+      // Header
+      /*#__PURE__*/React.createElement("div", {
+        style:{background:'var(--bg3)',borderBottom:'2px solid var(--gold)',padding:'14px 16px',display:'flex',alignItems:'center',gap:10}
+      },
+        /*#__PURE__*/React.createElement("span", {style:{fontSize:20}}, "📋"),
+        /*#__PURE__*/React.createElement("div", null,
+          /*#__PURE__*/React.createElement("div", {style:{fontWeight:700,fontSize:15,color:'var(--text)'}}, "Regulamento Oficial"),
+          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:'var(--muted)',marginTop:2}}, "Copa das Equipes · Great Slam 2026")
+        )
+      ),
+      // Capítulos
+      caps.map(function(cap, ci) {
+        var open = aberto === ci;
+        return /*#__PURE__*/React.createElement("div", {key:ci, style:{borderBottom: ci<caps.length-1?'1px solid var(--bg4)':'none'}},
+          // Cabeçalho do capítulo (clicável)
+          /*#__PURE__*/React.createElement("div", {
+            onClick: function(){ setAberto(open?null:ci); },
+            style:{
+              display:'flex',alignItems:'center',justifyContent:'space-between',
+              padding:'12px 16px',cursor:'pointer',
+              background: open?'rgba(201,168,76,.06)':'transparent',
+              transition:'background .15s'
+            }
+          },
+            /*#__PURE__*/React.createElement("div", {style:{display:'flex',alignItems:'center',gap:10}},
+              /*#__PURE__*/React.createElement("div", {
+                style:{
+                  width:28,height:28,borderRadius:6,flexShrink:0,
+                  background: open?'var(--gold)':'var(--bg4)',
+                  color: open?'#000':'var(--muted)',
+                  display:'flex',alignItems:'center',justifyContent:'center',
+                  fontSize:10,fontWeight:800,letterSpacing:'.04em'
+                }
+              }, cap.num),
+              /*#__PURE__*/React.createElement("div", null,
+                /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:'var(--dim)',textTransform:'uppercase',letterSpacing:'.08em',fontWeight:600}}, "Capítulo "+cap.num),
+                /*#__PURE__*/React.createElement("div", {style:{fontSize:13,fontWeight:600,color: open?'var(--gold)':'var(--text)'}}, cap.titulo)
+              )
+            ),
+            /*#__PURE__*/React.createElement("span", {style:{color:'var(--dim)',fontSize:16,transition:'transform .2s',transform:open?'rotate(180deg)':'none'}}, "▾")
+          ),
+          // Artigos (expansível)
+          open && /*#__PURE__*/React.createElement("div", {
+            style:{background:'var(--bg3)',padding:'0 16px 12px'}
+          },
+            cap.artigos.map(function(art, ai) {
+              return /*#__PURE__*/React.createElement("div", {
+                key:ai,
+                style:{
+                  padding:'10px 0',
+                  borderBottom: ai<cap.artigos.length-1?'1px solid var(--bg4)':'none'
+                }
+              },
+                /*#__PURE__*/React.createElement("div", {style:{display:'flex',gap:8,alignItems:'flex-start'}},
+                  /*#__PURE__*/React.createElement("span", {
+                    style:{fontSize:11,fontWeight:700,color:'var(--gold)',flexShrink:0,marginTop:1}
+                  }, "Art. "+art.n),
+                  /*#__PURE__*/React.createElement("div", null,
+                    /*#__PURE__*/React.createElement("div", {style:{fontSize:13,color:'var(--text)',lineHeight:1.6}}, art.txt),
+                    art.obs && /*#__PURE__*/React.createElement("div", {
+                      style:{fontSize:11,color:'var(--muted)',marginTop:6,fontStyle:'italic',lineHeight:1.5}
+                    }, art.obs)
+                  )
+                )
+              );
+            })
+          )
+        );
+      }),
+      // Rodapé
+      /*#__PURE__*/React.createElement("div", {
+        style:{padding:'12px 16px',background:'var(--bg3)',borderTop:'1px solid var(--bg4)',textAlign:'center'}
+      },
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:'var(--dim)'}}, "Fortaleza/CE, 2026 · Organização GREAT SLAM")
+      )
+    )
+  );
+}
 function Calendario() {
   var itens = [{
     icon: '📋',
@@ -5108,6 +5270,7 @@ function App() {
     jogos: /*#__PURE__*/React.createElement(Jogos, null),
     classificacao: /*#__PURE__*/React.createElement(Classificacao, null),
     calendario: /*#__PURE__*/React.createElement(Calendario, null),
+    regulamento: /*#__PURE__*/React.createElement(Regulamento, null),
     estatisticas: /*#__PURE__*/React.createElement(Estatisticas, null)
   };
   return /*#__PURE__*/React.createElement(CopaProvider, null, /*#__PURE__*/React.createElement(Layout, {
