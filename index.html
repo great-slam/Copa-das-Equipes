@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260906_0831 copa-gs-v9 -->
+<!-- Build: 20260906_0943 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -786,8 +786,8 @@ function calcClass(state) {
     const a1 = m[p.acad1Id],
       a2 = m[p.acad2Id];
     if (!a1 || !a2) return;
-    a1.j++;
-    a2.j++;
+    const duploWO = p.status === ST.WO && !p.vencedor;
+    if (!duploWO) { a1.j++; a2.j++; }
     if (!p.porWO) {
       a1.ss += (p.sets1 || 0) - (p.sets2 || 0);
       a2.ss += (p.sets2 || 0) - (p.sets1 || 0);
