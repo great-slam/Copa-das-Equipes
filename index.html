@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260906_1817 copa-gs-v9 -->
+<!-- Build: 20260906_2024 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
@@ -2258,6 +2258,14 @@ function Grupos() {
   if (!isAdmin) return /*#__PURE__*/React.createElement("div", {
     className: "space"
   }, /*#__PURE__*/React.createElement("div", {
+    style:{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:10,
+      padding:'12px 16px',textAlign:'center',marginBottom:4}
+  },
+    /*#__PURE__*/React.createElement("div", {
+      className: "section-title",
+      style:{margin:0,textAlign:'center'}
+    }, "🎾 GRUPOS POR CATEGORIA")
+  ), /*#__PURE__*/React.createElement("div", {
     className: "cat-pills"
   }, CATEGORIAS.map(c => /*#__PURE__*/React.createElement("button", {
     key: c,
@@ -2328,6 +2336,14 @@ function Grupos() {
   return /*#__PURE__*/React.createElement("div", {
     className: "space"
   }, /*#__PURE__*/React.createElement("div", {
+    style:{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:10,
+      padding:'12px 16px',textAlign:'center',marginBottom:4}
+  },
+    /*#__PURE__*/React.createElement("div", {
+      className: "section-title",
+      style:{margin:0,textAlign:'center'}
+    }, "🎾 GRUPOS POR CATEGORIA")
+  ), /*#__PURE__*/React.createElement("div", {
     className: "cat-pills"
   }, CATEGORIAS.map(c => /*#__PURE__*/React.createElement("button", {
     key: c,
@@ -3780,6 +3796,14 @@ function Jogos() {
   return /*#__PURE__*/React.createElement("div", {
     className: "space"
   }, /*#__PURE__*/React.createElement("div", {
+    style:{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:10,
+      padding:'12px 16px',textAlign:'center',marginBottom:4}
+  },
+    /*#__PURE__*/React.createElement("div", {
+      className: "section-title",
+      style:{margin:0,textAlign:'center'}
+    }, "🎾 JOGOS E RESULTADOS")
+  ), /*#__PURE__*/React.createElement("div", {
     style: {marginBottom: 12}
   },
   /*#__PURE__*/React.createElement("div", {style:{display:"flex",gap:8,marginBottom:8}},
@@ -4676,7 +4700,9 @@ function Estatisticas() {
   }, /*#__PURE__*/React.createElement("div", {
     className: "section-title",
     style: {
-      marginBottom: 12
+      marginBottom: 12,
+      textAlign: "center",
+      width: "100%"
     }
   }, "Visão Geral do Torneio"), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -5122,9 +5148,8 @@ function Regulamento() {
         style:{background:'var(--bg3)',borderBottom:'2px solid var(--gold)',padding:'14px 16px',display:'flex',alignItems:'center',gap:10}
       },
         /*#__PURE__*/React.createElement("span", {style:{fontSize:20}}, "📋"),
-        /*#__PURE__*/React.createElement("div", null,
-          /*#__PURE__*/React.createElement("div", {style:{fontWeight:700,fontSize:15,color:'var(--text)'}}, "Regulamento Oficial"),
-          /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:'var(--muted)',marginTop:2}}, "Copa das Equipes · Great Slam 2026")
+        /*#__PURE__*/React.createElement("div", {style:{flex:1,textAlign:'center'}},
+          /*#__PURE__*/React.createElement("div", {style:{fontWeight:700,fontSize:15,color:'var(--text)'}}, "Regulamento Oficial")
         )
       ),
       // Capítulos
@@ -5220,70 +5245,57 @@ function Calendario() {
     icon: '🎾',
     label: '3ª Rodada',
     data: '17 a 24/09'
-  }, {
-    icon: '🏆',
-    label: 'Premiação na academia campeã',
-    data: '25/09'
   }];
-  return /*#__PURE__*/React.createElement("div", {
-    className: "space"
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:10,overflow:'hidden'}
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {background:'var(--bg3)',borderBottom:'2px solid var(--gold)',padding:'14px 16px',display:'flex',alignItems:'center',gap:10}
-  }, /*#__PURE__*/React.createElement("span", {style:{fontSize:20}}, "📅"),
-  /*#__PURE__*/React.createElement("div", null,
-    /*#__PURE__*/React.createElement("div", {style:{fontWeight:700,fontSize:15,color:'var(--text)'}}, "Calendário Geral"),
-    /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:'var(--muted)',marginTop:2}}, "Copa das Equipes · Great Slam 2026")
-  )),
-  itens.map(function(item, i) {
-    var isRodada = item.label.includes('Rodada');
-    var isPremio = item.label.includes('Premia');
-    return /*#__PURE__*/React.createElement("div", {
-      key: i,
-      style: {
-        display:'flex',alignItems:'center',justifyContent:'space-between',
-        padding:'12px 16px',
-        borderBottom: i < itens.length-1 ? '1px solid var(--bg4)' : 'none',
-        background: isPremio ? 'rgba(201,168,76,.06)' : 'transparent'
-      }
-    },
-    /*#__PURE__*/React.createElement("div", {style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
-      /*#__PURE__*/React.createElement("span", {style:{fontSize:18,flexShrink:0}}, item.icon),
-      /*#__PURE__*/React.createElement("span", {
-        style:{fontSize:13,color: isPremio?'var(--gold)':isRodada?'var(--text)':'var(--muted)',
-          fontWeight: isPremio||isRodada?600:400}
-      }, item.label)
-    ),
+
+  return /*#__PURE__*/React.createElement("div", {className:"space"},
     /*#__PURE__*/React.createElement("div", {
-      style:{
-        flexShrink:0,marginLeft:12,
-        background: isPremio?'var(--gold)':isRodada?'rgba(201,168,76,.15)':'var(--bg4)',
-        color: isPremio?'#000':'var(--gold)',
-        padding:'4px 10px',borderRadius:6,
-        fontSize:12,fontWeight:700,whiteSpace:'nowrap'
-      }
-    }, item.data));
-  }),
-  /*#__PURE__*/React.createElement("div", {
-    style:{padding:'12px 16px',background:'var(--bg3)',borderTop:'1px solid var(--bg4)',
-      display:'flex',justifyContent:'space-around',textAlign:'center'}
-  },
-  /*#__PURE__*/React.createElement("div", null,
-    /*#__PURE__*/React.createElement("div", {style:{fontSize:20,marginBottom:4}}, "🎾"),
-    /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:'var(--muted)'}}, "3 Rodadas")
-  ),
-  /*#__PURE__*/React.createElement("div", {style:{width:1,background:'var(--bg4)'}}, null),
-  /*#__PURE__*/React.createElement("div", null,
-    /*#__PURE__*/React.createElement("div", {style:{fontSize:20,marginBottom:4}}, "👥"),
-    /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:'var(--muted)'}}, "3 Jogos por atleta")
-  ),
-  /*#__PURE__*/React.createElement("div", {style:{width:1,background:'var(--bg4)'}}, null),
-  /*#__PURE__*/React.createElement("div", null,
-    /*#__PURE__*/React.createElement("div", {style:{fontSize:20,marginBottom:4}}, "🏅"),
-    /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:'var(--muted)'}}, "4 Academias")
-  ))
-  ));
+      style:{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:10,overflow:'hidden'}
+    },
+      /*#__PURE__*/React.createElement("div", {
+        style:{background:'var(--bg3)',borderBottom:'2px solid var(--gold)',padding:'14px 16px',
+          display:'flex',alignItems:'center',justifyContent:'center',gap:10}
+      },
+        /*#__PURE__*/React.createElement("span", {style:{fontSize:22}}, "📅"),
+        /*#__PURE__*/React.createElement("div", {style:{fontWeight:700,fontSize:15,color:'var(--text)'}}, "Calendário Geral")
+      ),
+      itens.map(function(item, i) {
+        var isRodada = item.label.includes('Rodada');
+        return /*#__PURE__*/React.createElement("div", {
+          key: i,
+          style:{
+            display:'flex',alignItems:'center',justifyContent:'space-between',
+            padding:'12px 16px',
+            borderBottom:'1px solid var(--bg4)'
+          }
+        },
+          /*#__PURE__*/React.createElement("div", {style:{display:'flex',alignItems:'center',gap:12,flex:1,minWidth:0}},
+            /*#__PURE__*/React.createElement("span", {style:{fontSize:18,flexShrink:0}}, item.icon),
+            /*#__PURE__*/React.createElement("span", {
+              style:{fontSize:13,color:isRodada?'var(--text)':'var(--muted)',
+                fontWeight:isRodada?600:400,lineHeight:1.4}
+            }, item.label)
+          ),
+          /*#__PURE__*/React.createElement("div", {
+            style:{
+              flexShrink:0,marginLeft:12,
+              background:isRodada?'rgba(201,168,76,.15)':'var(--bg4)',
+              color:'var(--gold)',
+              padding:'4px 10px',borderRadius:6,
+              fontSize:12,fontWeight:700,whiteSpace:'nowrap'
+            }
+          }, item.data)
+        );
+      }),
+      /*#__PURE__*/React.createElement("div", {
+        style:{padding:'18px 16px',background:'rgba(201,168,76,.08)',
+          borderTop:'2px solid rgba(201,168,76,.3)',textAlign:'center'}
+      },
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:28,marginBottom:6}}, "🏆"),
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:14,fontWeight:700,color:'var(--gold)',marginBottom:4}}, "Premiação na academia campeã"),
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:13,color:'var(--muted)'}}, "25 de setembro de 2026")
+      )
+    )
+  );
 }
 function App() {
   const [page, setPage] = React.useState('classificacao');
