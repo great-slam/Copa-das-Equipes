@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260906_2030 copa-gs-v9 -->
+<!-- Build: 20260910_1855 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -1232,6 +1232,9 @@ const IcCal = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpr
 const IcDoc = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpread({}, p), {}, {
   d: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"
 }));
+const IcPhone = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpread({}, p), {}, {
+  d: "M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.22 1.18 2 2 0 012.18 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.72-.72a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"
+}));
 const IcTrash = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpread({}, p), {}, {
   d: "M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"
 }));
@@ -1313,6 +1316,10 @@ function Layout({
     label: 'Regulamento',
     icon: /*#__PURE__*/React.createElement(IcDoc, null)
   }, {
+    id: 'contatos',
+    label: 'Contatos',
+    icon: /*#__PURE__*/React.createElement(IcPhone, null)
+  }, {
     id: 'estatisticas',
     label: 'Stats',
     icon: /*#__PURE__*/React.createElement(IcChart, null)
@@ -1346,6 +1353,10 @@ function Layout({
     id: 'regulamento',
     label: 'Regulamento',
     icon: /*#__PURE__*/React.createElement(IcDoc, null)
+  }, {
+    id: 'contatos',
+    label: 'Contatos',
+    icon: /*#__PURE__*/React.createElement(IcPhone, null)
   }, {
     id: 'estatisticas',
     label: 'Stats',
@@ -5080,6 +5091,86 @@ function Estatisticas() {
 }
 
 // ── App ───────────────────────────────────────────────────────────────────────
+function Contatos() {
+  var links = [{
+    icon: '🌐',
+    label: 'Site Oficial',
+    sub: 'www.greatslam.com.br',
+    href: 'https://www.greatslam.com.br',
+    color: 'var(--blue)'
+  }, {
+    icon: '📱',
+    label: 'WhatsApp · Olavo Pimentel',
+    sub: '(85) 98118-2225',
+    href: 'https://api.whatsapp.com/send?phone=5585981182225&text=Olá, vim através do app Copa das Equipes e gostaria de mais informações.',
+    color: 'var(--green)'
+  }, {
+    icon: '📸',
+    label: 'Instagram',
+    sub: '@great.slam',
+    href: 'https://www.instagram.com/great.slam',
+    color: 'var(--orange)'
+  }, {
+    icon: '✉️',
+    label: 'E-mail',
+    sub: 'greatslam.tenis@gmail.com',
+    href: 'mailto:greatslam.tenis@gmail.com',
+    color: 'var(--gold)'
+  }];
+
+  return /*#__PURE__*/React.createElement("div", {className:"space"},
+    /*#__PURE__*/React.createElement("div", {
+      style:{background:'var(--bg2)',border:'1px solid var(--bg4)',borderRadius:10,overflow:'hidden'}
+    },
+      /*#__PURE__*/React.createElement("div", {
+        style:{background:'var(--bg3)',borderBottom:'2px solid var(--gold)',padding:'14px 16px',
+          display:'flex',alignItems:'center',justifyContent:'center',gap:8}
+      },
+        /*#__PURE__*/React.createElement("span", {style:{fontSize:20}}, "📞"),
+        /*#__PURE__*/React.createElement("div", {style:{fontWeight:700,fontSize:15,color:'var(--text)'}}, "Contatos")
+      ),
+      links.map(function(l, i) {
+        return /*#__PURE__*/React.createElement("a", {
+          key: i,
+          href: l.href,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+          style:{
+            display:'flex',alignItems:'center',gap:14,
+            padding:'14px 16px',
+            borderBottom: i < links.length-1 ? '1px solid var(--bg4)' : 'none',
+            textDecoration:'none',
+            cursor:'pointer',
+            transition:'background .15s'
+          }
+        },
+          /*#__PURE__*/React.createElement("div", {
+            style:{
+              width:44,height:44,borderRadius:12,flexShrink:0,
+              background:'rgba(255,255,255,.06)',
+              display:'flex',alignItems:'center',justifyContent:'center',
+              fontSize:22,border:'1px solid var(--bg5)'
+            }
+          }, l.icon),
+          /*#__PURE__*/React.createElement("div", {style:{flex:1,minWidth:0}},
+            /*#__PURE__*/React.createElement("div", {
+              style:{fontSize:13,fontWeight:600,color:'var(--text)',marginBottom:2}
+            }, l.label),
+            /*#__PURE__*/React.createElement("div", {
+              style:{fontSize:12,color:l.color,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}
+            }, l.sub)
+          ),
+          /*#__PURE__*/React.createElement("span", {style:{color:'var(--dim)',fontSize:16}}, "→")
+        );
+      }),
+      /*#__PURE__*/React.createElement("div", {
+        style:{padding:'14px 16px',background:'var(--bg3)',borderTop:'1px solid var(--bg4)',textAlign:'center'}
+      },
+        /*#__PURE__*/React.createElement("div", {style:{fontSize:11,color:'var(--dim)'}}, "Copa das Equipes · Great Slam 2026 · Fortaleza/CE")
+      )
+    )
+  );
+}
 function Regulamento() {
   var[aberto,setAberto] = React.useState(null);
   var caps = [{
@@ -5317,6 +5408,7 @@ function App() {
     classificacao: /*#__PURE__*/React.createElement(Classificacao, null),
     calendario: /*#__PURE__*/React.createElement(Calendario, null),
     regulamento: /*#__PURE__*/React.createElement(Regulamento, null),
+    contatos: /*#__PURE__*/React.createElement(Contatos, null),
     estatisticas: /*#__PURE__*/React.createElement(Estatisticas, null)
   };
   return /*#__PURE__*/React.createElement(CopaProvider, null, /*#__PURE__*/React.createElement(Layout, {
