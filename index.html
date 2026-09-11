@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260910_1855 copa-gs-v9 -->
+<!-- Build: 20260911_1418 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -17,7 +17,9 @@
 <meta name="twitter:image" content="https://great-slam.github.io/Copa-das-Equipes/og-image.jpg"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<style>/* ═══════════════════════════════════════════════════════════════
+<style>@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Inter:wght@400;500;600;700;800&display=swap');
+
+/* ═══════════════════════════════════════════════════════════════
    Copa das Equipes – Great Slam 2026
    Design System v2 — UI/UX profissional
 ═══════════════════════════════════════════════════════════════ */
@@ -25,29 +27,31 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Cores */
-  --gold:     #C9A84C;
-  --gold-lt:  #E8C97A;
-  --gold-dk:  #A07830;
-  --gold-dim: rgba(201,168,76,.12);
-  --bg:       #080808;
-  --bg2:      #111111;
-  --bg3:      #191919;
-  --bg4:      #242424;
-  --bg5:      #333333;
-  --text:     #F0F0F0;
-  --muted:    #7A7A7A;
-  --dim:      #4A4A4A;
-  --green:    #4ade80;
-  --green-dim:rgba(74,222,128,.12);
-  --red:      #f87171;
-  --red-dim:  rgba(248,113,113,.12);
-  --yellow:   #fbbf24;
-  --yellow-dim:rgba(251,191,36,.12);
-  --blue:     #60a5fa;
-  --blue-dim: rgba(96,165,250,.12);
-  --orange:   #fb923c;
-  --orange-dim:rgba(251,146,60,.12);
+  /* Cores — GREAT SLAM HUB design system */
+  --gold:     #d4af37;
+  --gold-lt:  #f0d67a;
+  --gold-dk:  #8a7028;
+  --gold-med: #c9a94e;
+  --gold-dim: rgba(212,175,55,.12);
+  --bg:       #0e0e0f;
+  --bg2:      #1a1a1d;
+  --bg3:      #141416;
+  --bg4:      #2a2a2e;
+  --bg5:      #212125;
+  --border-gold: #4a3f26;
+  --text:     #f5f3ee;
+  --muted:    #a8a6a0;
+  --dim:      #8f8e88;
+  --green:    #6fbf7f;
+  --green-dim:rgba(111,191,127,.12);
+  --red:      #c9705f;
+  --red-dim:  rgba(201,112,95,.12);
+  --yellow:   #c9a94e;
+  --yellow-dim:rgba(201,169,78,.12);
+  --blue:     #d98cb3;
+  --blue-dim: rgba(217,140,179,.12);
+  --orange:   #c9705f;
+  --orange-dim:rgba(201,112,95,.12);
 
   /* Layout */
   --sidebar: 220px;
@@ -65,10 +69,18 @@ html, body { height: 100%; -webkit-text-size-adjust: 100%; }
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
+  letter-spacing: -0.006em;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: 'ss01','cv01','tnum';
+}
+
+/* Números tabulares em todo lugar */
+table, .stat-val, .podium-bar, .progress, td, th {
+  font-variant-numeric: tabular-nums;
 }
 
 /* ── Shell ───────────────────────────────────────────────────── */
@@ -467,7 +479,95 @@ label {
 @media (max-width: 420px) {
   .g2 { grid-template-columns: 1fr; }
 }
-.justify-center{justify-content:center}.f1{flex:1}.items-end{align-items:flex-end}@keyframes spin{to{transform:rotate(360deg)}}.justify-center{justify-content:center}.f1{flex:1}.items-end{align-items:flex-end}@keyframes spin{to{transform:rotate(360deg)}}</style>
+.justify-center{justify-content:center}.f1{flex:1}.items-end{align-items:flex-end}@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ═══════════════════════════════════════════════════════════════
+   Refinamentos premium — GREAT SLAM HUB
+═══════════════════════════════════════════════════════════════ */
+
+::selection { background: #d4af3744; color: var(--text); }
+
+@keyframes fade    { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+@keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+@keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:none; } }
+@keyframes scaleIn { from { opacity:0; transform:scale(.96); } to { opacity:1; transform:scale(1); } }
+
+/* Scrollbar refinada */
+::-webkit-scrollbar { width:10px; height:10px; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--bg4), #1f1f22);
+  border-radius: 8px;
+  border: 2px solid var(--bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--gold-dk), var(--border-gold));
+}
+::-webkit-scrollbar-track { background: transparent; }
+* { scrollbar-width: thin; scrollbar-color: var(--bg4) transparent; }
+
+/* Micro-interações */
+button {
+  transition: filter .18s ease, transform .18s ease, background .2s ease,
+              border-color .2s ease, box-shadow .2s ease;
+}
+button:hover  { filter: brightness(1.08); }
+button:active { transform: scale(.97); }
+
+/* Cards com hover suave */
+.card, .stat-card, .res-card {
+  transition: transform .26s cubic-bezier(.22,.61,.36,1),
+              border-color .26s ease, box-shadow .26s ease;
+}
+.card:hover, .stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-gold);
+  box-shadow: 0 16px 40px -16px rgba(0,0,0,.75), 0 0 0 1px rgba(212,175,55,.12) inset;
+}
+
+/* Linhas de tabela */
+.tbl tr { transition: background .18s ease, box-shadow .18s ease; }
+.tbl tbody tr:hover td {
+  background: var(--bg5) !important;
+  box-shadow: inset 2px 0 0 rgba(212,175,55,.4);
+}
+
+/* Navegação */
+.nav-item, .bn-item { transition: background .18s ease, color .18s ease; }
+.nav-item:hover { background: var(--bg2); color: var(--text); }
+
+/* Transição de tela */
+.content > * { animation: fade .4s cubic-bezier(.22,.61,.36,1); }
+
+/* Raios de borda refinados */
+.card, .stat-card, .res-card { border-radius: 18px; }
+.btn, .cat-pill, .badge { border-radius: 10px; }
+.modal-box { border-radius: 22px 22px 0 0; }
+@media (min-width:600px) { .modal-box { border-radius: 22px; } }
+
+/* Botão dourado com gradiente */
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold-lt), var(--gold));
+  color: #1a1400;
+  box-shadow: 0 4px 14px rgba(212,175,55,.18);
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+.btn-gold:hover { background: linear-gradient(135deg, var(--gold-lt), var(--gold-lt)); }
+
+/* Respiro generoso */
+.card-p { padding: 20px; }
+.space > * + * { margin-top: 18px; }
+
+/* Rótulos de seção — serifa premium */
+.section-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  color: var(--gold-med);
+  letter-spacing: .06em;
+  font-size: 17px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.justify-center{justify-content:center}.f1{flex:1}.items-end{align-items:flex-end}@keyframes spin{to{transform:rotate(360deg)}}</style>
 </head>
 <body>
 <div id="root"></div>
@@ -1354,10 +1454,6 @@ function Layout({
     label: 'Regulamento',
     icon: /*#__PURE__*/React.createElement(IcDoc, null)
   }, {
-    id: 'contatos',
-    label: 'Contatos',
-    icon: /*#__PURE__*/React.createElement(IcPhone, null)
-  }, {
     id: 'estatisticas',
     label: 'Stats',
     icon: /*#__PURE__*/React.createElement(IcChart, null)
@@ -1513,6 +1609,9 @@ function Layout({
     className: "nav-item" + (page === n.id ? ' active' : ''),
     onClick: () => go(n.id)
   }, n.icon, /*#__PURE__*/React.createElement("span", null, n.label))), isAdmin && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "nav-item",
+    onClick: () => go('contatos')
+  }, /*#__PURE__*/React.createElement(IcPhone, null), /*#__PURE__*/React.createElement("span", null, "Contatos")), /*#__PURE__*/React.createElement("div", {
     className: "sidebar-section-title",
     style: {
       marginTop: 8
