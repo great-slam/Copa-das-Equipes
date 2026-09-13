@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260913_1321 copa-gs-v9 -->
+<!-- Build: 20260913_1415 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -4547,6 +4547,15 @@ function Classificacao() {
     state
   } = useCopa();
   const cl = calcClass(state);
+  const desempates = [];
+  for (let k = 0; k < cl.length - 1; k++) {
+    const a = cl[k], b = cl[k + 1];
+    if (a.pts !== b.pts) continue;
+    let criterio = null, va = null, vb = null;
+    if (a.ss !== b.ss) { criterio = 'saldo de sets'; va = a.ss; vb = b.ss; }
+    else if (a.sg !== b.sg) { criterio = 'saldo de games'; va = a.sg; vb = b.sg; }
+    if (criterio) desempates.push({ nome: a.nome, outro: b.nome, criterio: criterio, va: va, vb: vb });
+  }
   const total = state.partidas.length;
   const feitos = state.partidas.filter(p => p.status === ST.REALIZADO || p.status === ST.WO).length;
   const pct = total > 0 ? Math.round(feitos/total*100) : 0;
@@ -4771,7 +4780,27 @@ function Classificacao() {
       textAlign: 'right',
       color: 'var(--red)'
     }
-  }, ac.d))))))));
+  }, ac.d)))))),
+  desempates.length > 0 && /*#__PURE__*/React.createElement("div", {
+    style: { marginTop: 10, padding: '0 4px' }
+  }, desempates.map(function (d, k) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: k,
+      style: {
+        fontSize: 11, color: 'var(--dim)', lineHeight: 1.5,
+        textAlign: 'center', marginTop: k > 0 ? 4 : 0
+      }
+    },
+      /*#__PURE__*/React.createElement("span", {
+        style: { color: 'var(--muted)', fontWeight: 600 }
+      }, d.nome),
+      " à frente de ",
+      /*#__PURE__*/React.createElement("span", {
+        style: { color: 'var(--muted)', fontWeight: 600 }
+      }, d.outro),
+      " por " + d.criterio + " (" + (d.va > 0 ? '+' : '') + d.va + " × " + (d.vb > 0 ? '+' : '') + d.vb + ")"
+    );
+  }))));
 }
 
 // ── Estatísticas ──────────────────────────────────────────────────────────────
