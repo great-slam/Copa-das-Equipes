@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260913_1316 copa-gs-v9 -->
+<!-- Build: 20260913_1321 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -898,7 +898,16 @@ function calcClass(state) {
     if (!a1 || !a2) return;
     const duploWO = p.status === ST.WO && !p.vencedor;
     if (!duploWO) { a1.j++; a2.j++; }
-    if (!p.porWO) {
+    if (p.porWO) {
+      // WO com vencedor: computa como 6/0 6/0 para quem venceu
+      if (p.vencedor === p.acad1Id) {
+        a1.ss += 2; a2.ss -= 2;
+        a1.sg += 12; a2.sg -= 12;
+      } else if (p.vencedor === p.acad2Id) {
+        a2.ss += 2; a1.ss -= 2;
+        a2.sg += 12; a1.sg -= 12;
+      }
+    } else {
       a1.ss += (p.sets1 || 0) - (p.sets2 || 0);
       a2.ss += (p.sets2 || 0) - (p.sets1 || 0);
       a1.sg += (p.games1 || 0) - (p.games2 || 0);
@@ -932,6 +941,8 @@ function calcEstat(state) {
     if (p.status !== ST.REALIZADO && p.status !== ST.WO) return;
     const a1 = m[p.atleta1Id],
       a2 = m[p.atleta2Id];
+    const duploWO = p.status === ST.WO && !p.vencedor;
+    if (duploWO) return;
     if (a1) {
       a1.j++;
       if (p.vencedor === p.acad1Id) {
