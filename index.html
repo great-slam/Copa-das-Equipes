@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260913_1415 copa-gs-v9 -->
+<!-- Build: 20260914_1242 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -34,6 +34,8 @@
   --gold-med: #c9a94e;
   --gold-dim: rgba(212,175,55,.12);
   --bg:       #0e0e0f;
+  --bg-bar:   #0a0a0b;
+  --bg-elev:  #212125;
   --bg2:      #1a1a1d;
   --bg3:      #141416;
   --bg4:      #2a2a2e;
@@ -56,8 +58,8 @@
   /* Layout */
   --sidebar: 220px;
   --topbar:  56px;
-  --radius:  10px;
-  --radius-sm: 6px;
+  --radius:  12px;
+  --radius-sm: 12px;
 
   /* Shadows */
   --shadow-sm: 0 1px 3px rgba(0,0,0,.4);
@@ -141,11 +143,11 @@ table, .stat-val, .podium-bar, .progress, td, th {
 
 .sidebar {
   width: var(--sidebar);
-  background: var(--bg2);
+  background: var(--bg-bar);
   border-right: 1px solid var(--bg4);
   padding: 12px 8px;
   display: flex; flex-direction: column; gap: 2px;
-  flex-shrink: 0; overflow-y: auto;
+  flex-shrink: 0; min-height: 0; overflow-y: auto;
   transition: transform .25s cubic-bezier(.4,0,.2,1);
 }
 .sidebar-section-title {
@@ -162,7 +164,11 @@ table, .stat-val, .podium-bar, .progress, td, th {
   user-select: none; white-space: nowrap;
 }
 .nav-item:hover  { color: var(--text); background: var(--bg3); }
-.nav-item.active { color: var(--gold); background: var(--gold-dim); font-weight: 600; }
+.nav-item.active {
+  color: var(--text); background: var(--bg-elev); font-weight: 600;
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+.nav-item.active svg { color: var(--gold); }
 .nav-item span   { font-size: 13px; }
 
 .sidebar-overlay {
@@ -367,8 +373,10 @@ label {
 /* ── Bottom nav ──────────────────────────────────────────────── */
 .bottom-nav {
   display: none;
-  background: var(--bg2);
-  border-top: 1px solid var(--bg4);
+  background: rgba(10,10,11,.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(212,175,55,.17);
   padding-bottom: env(safe-area-inset-bottom, 0);
   flex-shrink: 0;
 }
@@ -567,6 +575,23 @@ button:active { transform: scale(.97); }
   font-weight: 700;
   text-transform: uppercase;
 }
+
+
+/* ── Ajustes finais do padrão GREAT SLAM ─────────────────────── */
+::-webkit-scrollbar { width: 7px; }
+::-webkit-scrollbar-thumb { background: #d4af3759; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #d4af3790; }
+::-webkit-scrollbar-track { background: transparent; }
+* { scrollbar-width: thin; scrollbar-color: #d4af3759 transparent; }
+
+/* Campo de foco com halo dourado */
+input:focus, select:focus, textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212,175,55,.10);
+}
+
+/* Rótulo de bloco no dourado médio */
+.section-title { color: var(--gold-med); }
 .justify-center{justify-content:center}.f1{flex:1}.items-end{align-items:flex-end}@keyframes spin{to{transform:rotate(360deg)}}</style>
 </head>
 <body>
