@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260923_0054 copa-gs-v9 -->
+<!-- Build: 20260923_0153 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -1241,7 +1241,8 @@ function CopaProvider({
   const salvarOcorrencia = (pid, {
     tipo,
     atletaPerdeId,
-    motivo
+    motivo,
+    parcial
   }) => {
     const p = state.partidas.find(x => x.id === pid);
     if (!p) return;
@@ -1265,8 +1266,35 @@ function CopaProvider({
         placarRaw: null,
         stbInfo: null
       });
+    } else if (tipo === 'desist' && parcial &&
+               (parcial.s1a !== '' || parcial.s1b !== '' || parcial.s2a !== '' || parcial.s2b !== '')) {
+      // Desistência com placar parcial: vale o que foi jogado até o abandono
+      const venc = atletaPerdeId === p.acad1Id ? p.acad2Id : p.acad1Id;
+      const q = v => { const n = parseInt(v); return isNaN(n) ? 0 : n; };
+      const g1 = q(parcial.s1a) + q(parcial.s2a);
+      const g2 = q(parcial.s1b) + q(parcial.s2b);
+      const st1 = (q(parcial.s1a) > q(parcial.s1b) ? 1 : 0) + (q(parcial.s2a) > q(parcial.s2b) ? 1 : 0);
+      const st2 = (q(parcial.s1b) > q(parcial.s1a) ? 1 : 0) + (q(parcial.s2b) > q(parcial.s2a) ? 1 : 0);
+      novaPart = _objectSpread(_objectSpread({}, p), {}, {
+        status: ST.REALIZADO,
+        vencedor: venc,
+        porWO: false,
+        desistiu: atletaPerdeId,
+        woMotivo: motivo || 'Desistencia',
+        historico: hist,
+        sets1: st1,
+        sets2: st2,
+        games1: g1,
+        games2: g2,
+        placarRaw: {
+          s1a: parcial.s1a, s1b: parcial.s1b,
+          s2a: parcial.s2a, s2b: parcial.s2b,
+          stbA: null, stbB: null
+        },
+        stbInfo: null
+      });
     } else {
-      // WO ou Desistência: adversário vence
+      // WO, ou desistência sem placar: adversário vence, vale 6/0 6/0
       const venc = atletaPerdeId === p.acad1Id ? p.acad2Id : p.acad1Id;
       novaPart = _objectSpread(_objectSpread({}, p), {}, {
         status: ST.WO,
@@ -2771,7 +2799,8 @@ function ModalSumula({
     onSaveOcorrencia({
       tipo: tipoOc,
       atletaPerdeId: atletaWO,
-      motivo
+      motivo,
+      parcial: tipoOc === 'desist' ? { s1a: s1a, s1b: s1b, s2a: s2a, s2b: s2b } : null
     });
   };
   const podeOc = tipoOc && (tipoOc === 'dwo' || atletaWO);
@@ -3387,7 +3416,37 @@ function ModalSumula({
       color: 'var(--muted)',
       marginTop: 4
     }
-  }, "+1 ponto · Sem saldo de sets/games"))), tipoOc && /*#__PURE__*/React.createElement("div", {
+  }, "+1 ponto · Sem saldo de sets/games"))), tipoOc === 'desist' && /*#__PURE__*/React.createElement("div", {
+    style: {
+      marginBottom: 14,
+      background: 'var(--bg3)',
+      border: '1px solid var(--bg5)',
+      borderRadius: 10,
+      padding: '12px 14px'
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 11, color: 'var(--muted)', marginBottom: 2 }
+  }, "Placar parcial ", /*#__PURE__*/React.createElement("span", {
+    style: { color: 'var(--dim)', fontWeight: 400 }
+  }, "(opcional)")), /*#__PURE__*/React.createElement("div", {
+    style: { fontSize: 10, color: 'var(--dim)', marginBottom: 10, lineHeight: 1.45 }
+  }, "Como estava quando o atleta abandonou. Deixe em branco se a partida nao chegou a comecar \u2014 nesse caso vale 6/0 6/0."),
+  [[ 'SET 1', s1a, setS1a, s1b, setS1b ], [ 'SET 2', s2a, setS2a, s2b, setS2b ]].map(function (linha, li) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: li,
+      style: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: li === 0 ? 8 : 0 }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: { fontSize: 10, fontWeight: 700, color: 'var(--dim)', width: 42, letterSpacing: '.06em' }
+    }, linha[0]), /*#__PURE__*/React.createElement(SI, {
+      v: linha[1], onChange: linha[2], w: 46, fs: 17
+    }), /*#__PURE__*/React.createElement("span", {
+      style: { color: 'var(--bg5)' }
+    }, "\u2013"), /*#__PURE__*/React.createElement(SI, {
+      v: linha[3], onChange: linha[4], w: 46, fs: 17
+    }), /*#__PURE__*/React.createElement("span", {
+      style: { fontSize: 10, color: 'var(--dim)', marginLeft: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
+    }, (at1 === null || at1 === void 0 ? void 0 : at1.nome) + " / " + (at2 === null || at2 === void 0 ? void 0 : at2.nome)));
+  })), tipoOc && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 14
     }
@@ -3635,7 +3694,12 @@ function Jogos() {
       style: {
         fontSize: 9
       }
-    }, "WO") : /*#__PURE__*/React.createElement("span", {
+    }, "WO") : p.desistiu ? /*#__PURE__*/React.createElement("span", {
+      className: "badge badge-orange",
+      style: {
+        fontSize: 9
+      }
+    }, "Desist\u00eancia") : /*#__PURE__*/React.createElement("span", {
       className: "badge badge-green",
       style: {
         fontSize: 9
@@ -3819,7 +3883,7 @@ function Jogos() {
         color: 'var(--gold-dk)',
         marginBottom: 2
       }
-    }, isWO ? 'Vitória por WO' : 'Vencedor'), /*#__PURE__*/React.createElement("div", {
+    }, isWO ? 'Vit\u00f3ria por WO' : p.desistiu ? 'Vit\u00f3ria por desist\u00eancia' : 'Vencedor'), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 16,
         fontWeight: 800,
