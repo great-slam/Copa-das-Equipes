@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260920_1515 copa-gs-v9 -->
+<!-- Build: 20260923_0054 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -592,6 +592,29 @@ input:focus, select:focus, textarea:focus {
 
 /* Rótulo de bloco no dourado médio */
 .section-title { color: var(--gold-med); }
+
+
+/* ── Link de retorno ao portal, no cabeçalho ─────────────────── */
+.mode-badge.portal {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(212,175,55,.05);
+  border: 1px solid rgba(212,175,55,.15);
+  color: var(--gold-med);
+  text-decoration: none;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+.mode-badge.portal:hover {
+  background: rgba(212,175,55,.10);
+  border-color: var(--gold-dk);
+  color: var(--gold-lt);
+}
+.topbar-right { gap: 6px; }
+
+/* Em tela estreita fica só o ícone, para não apertar o cabeçalho */
+@media (max-width: 520px) {
+  .portal-label { display: none; }
+  .mode-badge.portal { padding: 5px 8px; }
+}
 .justify-center{justify-content:center}.f1{flex:1}.items-end{align-items:flex-end}@keyframes spin{to{transform:rotate(360deg)}}</style>
 </head>
 <body>
@@ -1368,6 +1391,9 @@ const IcCal = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpr
 const IcDoc = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpread({}, p), {}, {
   d: "M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8zM14 2v6h6M16 13H8M16 17H8M10 9H8"
 }));
+const IcBack = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpread({}, p), {}, {
+  d: "M19 12H5M12 19l-7-7 7-7"
+}));
 const IcPhone = p => /*#__PURE__*/React.createElement(Ic, _objectSpread(_objectSpread({}, p), {}, {
   d: "M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.22 1.18 2 2 0 012.18 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.72-.72a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"
 }));
@@ -1533,7 +1559,15 @@ function Layout({
     style: {color:"var(--gold)",fontSize:10,letterSpacing:".06em"}
   }, "Great Slam 2026")))), /*#__PURE__*/React.createElement("div", {
     className: "topbar-right"
-  }, isAdmin ? /*#__PURE__*/React.createElement("button", {
+  }, /*#__PURE__*/React.createElement("a", {
+    href: "https://greatslam.com.br",
+    className: "mode-badge portal",
+    title: "Voltar ao portal GREAT SLAM"
+  }, /*#__PURE__*/React.createElement(IcBack, {
+    size: 13
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "portal-label"
+  }, "Portal")), isAdmin ? /*#__PURE__*/React.createElement("button", {
     className: "mode-badge admin",
     onClick: logoutAdmin,
     id: "admin-badge"
