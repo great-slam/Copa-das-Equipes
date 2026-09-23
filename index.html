@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260923_0153 copa-gs-v9 -->
+<!-- Build: 20260923_0219 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -1266,15 +1266,11 @@ function CopaProvider({
         placarRaw: null,
         stbInfo: null
       });
-    } else if (tipo === 'desist' && parcial &&
-               (parcial.s1a !== '' || parcial.s1b !== '' || parcial.s2a !== '' || parcial.s2b !== '')) {
-      // Desistência com placar parcial: vale o que foi jogado até o abandono
+    } else if (tipo === 'desist') {
+      // Desistência: quem ficou vence os games restantes (regra GREAT SLAM)
       const venc = atletaPerdeId === p.acad1Id ? p.acad2Id : p.acad1Id;
-      const q = v => { const n = parseInt(v); return isNaN(n) ? 0 : n; };
-      const g1 = q(parcial.s1a) + q(parcial.s2a);
-      const g2 = q(parcial.s1b) + q(parcial.s2b);
-      const st1 = (q(parcial.s1a) > q(parcial.s1b) ? 1 : 0) + (q(parcial.s2a) > q(parcial.s2b) ? 1 : 0);
-      const st2 = (q(parcial.s1b) > q(parcial.s1a) ? 1 : 0) + (q(parcial.s2b) > q(parcial.s2a) ? 1 : 0);
+      const lado = atletaPerdeId === p.acad1Id ? 2 : 1;
+      const r = completarDesistencia(parcial || {}, lado);
       novaPart = _objectSpread(_objectSpread({}, p), {}, {
         status: ST.REALIZADO,
         vencedor: venc,
@@ -1282,16 +1278,16 @@ function CopaProvider({
         desistiu: atletaPerdeId,
         woMotivo: motivo || 'Desistencia',
         historico: hist,
-        sets1: st1,
-        sets2: st2,
-        games1: g1,
-        games2: g2,
+        sets1: r.sets1,
+        sets2: r.sets2,
+        games1: r.games1,
+        games2: r.games2,
         placarRaw: {
-          s1a: parcial.s1a, s1b: parcial.s1b,
-          s2a: parcial.s2a, s2b: parcial.s2b,
-          stbA: null, stbB: null
+          s1a: r.s1a, s1b: r.s1b,
+          s2a: r.s2a, s2b: r.s2b,
+          stbA: r.stbA, stbB: r.stbB
         },
-        stbInfo: null
+        stbInfo: r.stbA !== null ? { a: r.stbA, b: r.stbB } : null
       });
     } else {
       // WO, ou desistência sem placar: adversário vence, vale 6/0 6/0
@@ -2675,6 +2671,35 @@ function Grupos() {
 }
 
 // ── Súmula Modal ──────────────────────────────────────────────────────────────
+function completarDesistencia(parcial, vencedorLado) {
+  const q = v => { const n = parseInt(v); return isNaN(n) ? 0 : n; };
+  const pares = [[parcial.s1a, parcial.s1b], [parcial.s2a, parcial.s2b]];
+  const sets = [];
+  for (let i = 0; i < 2; i++) {
+    let ga = q(pares[i][0]), gb = q(pares[i][1]);
+    const concluido = (Math.max(ga, gb) >= 6 && Math.abs(ga - gb) >= 2) || Math.max(ga, gb) === 7;
+    if (!concluido) {
+      if (vencedorLado === 1) ga = gb >= 5 ? Math.min(gb + 2, 7) : 6;
+      else                    gb = ga >= 5 ? Math.min(ga + 2, 7) : 6;
+    }
+    sets.push([ga, gb]);
+  }
+  let s1 = 0, s2 = 0;
+  for (let i = 0; i < 2; i++) { if (sets[i][0] > sets[i][1]) s1++; else if (sets[i][1] > sets[i][0]) s2++; }
+  let stbA = null, stbB = null;
+  if (s1 === 1 && s2 === 1) {
+    if (vencedorLado === 1) { stbA = 10; stbB = 0; s1++; }
+    else                    { stbA = 0; stbB = 10; s2++; }
+  }
+  const g1 = sets[0][0] + sets[1][0] + (stbA !== null && stbA > stbB ? 1 : 0);
+  const g2 = sets[0][1] + sets[1][1] + (stbB !== null && stbB > stbA ? 1 : 0);
+  return {
+    s1a: sets[0][0], s1b: sets[0][1],
+    s2a: sets[1][0], s2b: sets[1][1],
+    stbA: stbA, stbB: stbB,
+    sets1: s1, sets2: s2, games1: g1, games2: g2
+  };
+}
 function ModalSumula({
   partida,
   atletas,
@@ -3416,7 +3441,7 @@ function ModalSumula({
       color: 'var(--muted)',
       marginTop: 4
     }
-  }, "+1 ponto · Sem saldo de sets/games"))), tipoOc === 'desist' && /*#__PURE__*/React.createElement("div", {
+  }, tipoOc === 'desist' ? '+1 ponto · Saldo conforme o placar acima' : '+1 ponto · Vale 6/0 6/0 no saldo'))), tipoOc === 'desist' && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 14,
       background: 'var(--bg3)',
@@ -3430,7 +3455,7 @@ function ModalSumula({
     style: { color: 'var(--dim)', fontWeight: 400 }
   }, "(opcional)")), /*#__PURE__*/React.createElement("div", {
     style: { fontSize: 10, color: 'var(--dim)', marginBottom: 10, lineHeight: 1.45 }
-  }, "Como estava quando o atleta abandonou. Deixe em branco se a partida nao chegou a comecar \u2014 nesse caso vale 6/0 6/0."),
+  }, "Como estava quando o atleta abandonou. Pela regra do GREAT SLAM, o adversario vence os games restantes."),
   [[ 'SET 1', s1a, setS1a, s1b, setS1b ], [ 'SET 2', s2a, setS2a, s2b, setS2b ]].map(function (linha, li) {
     return /*#__PURE__*/React.createElement("div", {
       key: li,
@@ -3446,7 +3471,28 @@ function ModalSumula({
     }), /*#__PURE__*/React.createElement("span", {
       style: { fontSize: 10, color: 'var(--dim)', marginLeft: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
     }, (at1 === null || at1 === void 0 ? void 0 : at1.nome) + " / " + (at2 === null || at2 === void 0 ? void 0 : at2.nome)));
-  })), tipoOc && /*#__PURE__*/React.createElement("div", {
+  }), atletaWO && (function () {
+    const lado = atletaWO === partida.acad1Id ? 2 : 1;
+    const r = completarDesistencia({ s1a: s1a, s1b: s1b, s2a: s2a, s2b: s2b }, lado);
+    const stb = r.stbA !== null ? "  [" + r.stbA + "-" + r.stbB + "]" : "";
+    return /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 12, paddingTop: 10,
+        borderTop: '1px solid var(--bg5)',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10
+      }
+    }, /*#__PURE__*/React.createElement("div", null,
+      /*#__PURE__*/React.createElement("div", {
+        style: { fontSize: 10, color: 'var(--dim)', marginBottom: 3 }
+      }, "Sera registrado como"),
+      /*#__PURE__*/React.createElement("div", {
+        style: { fontFamily: 'monospace', fontSize: 15, fontWeight: 800, color: 'var(--gold)', letterSpacing: '.04em' }
+      }, r.s1a + "/" + r.s1b + "  " + r.s2a + "/" + r.s2b + stb)
+    ), /*#__PURE__*/React.createElement("div", {
+      style: { textAlign: 'right', fontSize: 10, color: 'var(--dim)', lineHeight: 1.5 }
+    }, /*#__PURE__*/React.createElement("div", null, "sets ", r.sets1, "\u2013", r.sets2),
+       /*#__PURE__*/React.createElement("div", null, "games ", r.games1, "\u2013", r.games2)));
+  })()), tipoOc && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 14
     }
