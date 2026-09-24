@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260923_0219 copa-gs-v9 -->
+<!-- Build: 20260924_0021 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -1264,6 +1264,25 @@ function CopaProvider({
         games1: null,
         games2: null,
         placarRaw: null,
+        stbInfo: null
+      });
+    } else if (tipo === 'tempo') {
+      // Tempo de quadra esgotado: vale o placar exatamente como parou
+      const q = v => { const n = parseInt(v); return isNaN(n) ? 0 : n; };
+      const pc = parcial || {};
+      const a1 = q(pc.s1a), b1 = q(pc.s1b), a2 = q(pc.s2a), b2 = q(pc.s2b);
+      novaPart = _objectSpread(_objectSpread({}, p), {}, {
+        status: ST.REALIZADO,
+        vencedor: atletaPerdeId,
+        porWO: false,
+        encerradoPorTempo: true,
+        woMotivo: motivo || 'Tempo de quadra esgotado',
+        historico: hist,
+        sets1: (a1 > b1 ? 1 : 0) + (a2 > b2 ? 1 : 0),
+        sets2: (b1 > a1 ? 1 : 0) + (b2 > a2 ? 1 : 0),
+        games1: a1 + a2,
+        games2: b1 + b2,
+        placarRaw: { s1a: pc.s1a, s1b: pc.s1b, s2a: pc.s2a, s2b: pc.s2b, stbA: null, stbB: null },
         stbInfo: null
       });
     } else if (tipo === 'desist') {
@@ -2750,6 +2769,11 @@ function ModalSumula({
     label: 'Desistencia',
     desc: 'Atleta iniciou e abandonou. Vitoria e ponto para o adversario.',
     cor: 'var(--red)'
+  }, {
+    id: 'tempo',
+    label: 'Tempo de quadra esgotado',
+    desc: 'Partida encerrada antes do fim. Vale o placar como parou.',
+    cor: 'var(--yellow)'
   }];
   const duploBYEmodal = at1bye && at2bye;
   const byeAcadId = at1bye && !at2bye ? partida.acad1Id : at2bye && !at1bye ? partida.acad2Id : '';
@@ -2825,7 +2849,7 @@ function ModalSumula({
       tipo: tipoOc,
       atletaPerdeId: atletaWO,
       motivo,
-      parcial: tipoOc === 'desist' ? { s1a: s1a, s1b: s1b, s2a: s2a, s2b: s2b } : null
+      parcial: (tipoOc === 'desist' || tipoOc === 'tempo') ? { s1a: s1a, s1b: s1b, s2a: s2a, s2b: s2b } : null
     });
   };
   const podeOc = tipoOc && (tipoOc === 'dwo' || atletaWO);
@@ -3350,7 +3374,7 @@ function ModalSumula({
       marginBottom: 8,
       display: 'block'
     }
-  }, tipoOc === 'wo' ? 'Atleta que nao compareceu' : 'Atleta que desistiu'), /*#__PURE__*/React.createElement("div", {
+  }, tipoOc === 'wo' ? 'Atleta que nao compareceu' : tipoOc === 'tempo' ? 'Quem venceu pelo placar' : 'Atleta que desistiu'), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       gap: 8
@@ -3433,15 +3457,17 @@ function ModalSumula({
       fontSize: 13,
       color: 'var(--gold)'
     }
-  }, atletaWO === partida.acad1Id ? ac2 === null || ac2 === void 0 ? void 0 : ac2.nome : ac1 === null || ac1 === void 0 ? void 0 : ac1.nome, " vence"), /*#__PURE__*/React.createElement("span", {
+  }, tipoOc === 'tempo'
+      ? (atletaWO === partida.acad1Id ? (ac1 === null || ac1 === void 0 ? void 0 : ac1.nome) : (ac2 === null || ac2 === void 0 ? void 0 : ac2.nome))
+      : (atletaWO === partida.acad1Id ? (ac2 === null || ac2 === void 0 ? void 0 : ac2.nome) : (ac1 === null || ac1 === void 0 ? void 0 : ac1.nome)), " vence"), /*#__PURE__*/React.createElement("span", {
     className: "badge badge-orange"
-  }, "Por ", tipoOc === 'wo' ? 'WO' : 'desistencia')), /*#__PURE__*/React.createElement("div", {
+  }, "Por ", tipoOc === 'wo' ? 'WO' : tipoOc === 'tempo' ? 'tempo de quadra' : 'desistencia')), /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11,
       color: 'var(--muted)',
       marginTop: 4
     }
-  }, tipoOc === 'desist' ? '+1 ponto · Saldo conforme o placar acima' : '+1 ponto · Vale 6/0 6/0 no saldo'))), tipoOc === 'desist' && /*#__PURE__*/React.createElement("div", {
+  }, tipoOc === 'desist' ? '+1 ponto · Adversario vence os games restantes' : tipoOc === 'tempo' ? '+1 ponto · Saldo exatamente como o placar acima' : '+1 ponto · Vale 6/0 6/0 no saldo'))), (tipoOc === 'desist' || tipoOc === 'tempo') && /*#__PURE__*/React.createElement("div", {
     style: {
       marginBottom: 14,
       background: 'var(--bg3)',
@@ -3451,11 +3477,13 @@ function ModalSumula({
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: { fontSize: 11, color: 'var(--muted)', marginBottom: 2 }
-  }, "Placar parcial ", /*#__PURE__*/React.createElement("span", {
+  }, tipoOc === 'tempo' ? 'Placar final' : 'Placar parcial', " ", /*#__PURE__*/React.createElement("span", {
     style: { color: 'var(--dim)', fontWeight: 400 }
   }, "(opcional)")), /*#__PURE__*/React.createElement("div", {
     style: { fontSize: 10, color: 'var(--dim)', marginBottom: 10, lineHeight: 1.45 }
-  }, "Como estava quando o atleta abandonou. Pela regra do GREAT SLAM, o adversario vence os games restantes."),
+  }, tipoOc === 'tempo'
+      ? "Como a partida parou quando o tempo de quadra acabou. O placar vale exatamente como esta."
+      : "Como estava quando o atleta abandonou. Pela regra do GREAT SLAM, o adversario vence os games restantes."),
   [[ 'SET 1', s1a, setS1a, s1b, setS1b ], [ 'SET 2', s2a, setS2a, s2b, setS2b ]].map(function (linha, li) {
     return /*#__PURE__*/React.createElement("div", {
       key: li,
@@ -3472,8 +3500,21 @@ function ModalSumula({
       style: { fontSize: 10, color: 'var(--dim)', marginLeft: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
     }, (at1 === null || at1 === void 0 ? void 0 : at1.nome) + " / " + (at2 === null || at2 === void 0 ? void 0 : at2.nome)));
   }), atletaWO && (function () {
-    const lado = atletaWO === partida.acad1Id ? 2 : 1;
-    const r = completarDesistencia({ s1a: s1a, s1b: s1b, s2a: s2a, s2b: s2b }, lado);
+    const q = v => { const n = parseInt(v); return isNaN(n) ? 0 : n; };
+    const lado = tipoOc === 'tempo'
+      ? (atletaWO === partida.acad1Id ? 1 : 2)
+      : (atletaWO === partida.acad1Id ? 2 : 1);
+    const r = tipoOc === 'tempo'
+      ? (function () {
+          const a1 = q(s1a), b1 = q(s1b), a2 = q(s2a), b2 = q(s2b);
+          return {
+            s1a: a1, s1b: b1, s2a: a2, s2b: b2, stbA: null, stbB: null,
+            sets1: (a1 > b1 ? 1 : 0) + (a2 > b2 ? 1 : 0),
+            sets2: (b1 > a1 ? 1 : 0) + (b2 > a2 ? 1 : 0),
+            games1: a1 + a2, games2: b1 + b2
+          };
+        })()
+      : completarDesistencia({ s1a: s1a, s1b: s1b, s2a: s2a, s2b: s2b }, lado);
     const stb = r.stbA !== null ? "  [" + r.stbA + "-" + r.stbB + "]" : "";
     return /*#__PURE__*/React.createElement("div", {
       style: {
@@ -3484,7 +3525,7 @@ function ModalSumula({
     }, /*#__PURE__*/React.createElement("div", null,
       /*#__PURE__*/React.createElement("div", {
         style: { fontSize: 10, color: 'var(--dim)', marginBottom: 3 }
-      }, "Sera registrado como"),
+      }, tipoOc === 'tempo' ? 'Placar registrado' : 'Sera registrado como'),
       /*#__PURE__*/React.createElement("div", {
         style: { fontFamily: 'monospace', fontSize: 15, fontWeight: 800, color: 'var(--gold)', letterSpacing: '.04em' }
       }, r.s1a + "/" + r.s1b + "  " + r.s2a + "/" + r.s2b + stb)
@@ -3740,7 +3781,12 @@ function Jogos() {
       style: {
         fontSize: 9
       }
-    }, "WO") : p.desistiu ? /*#__PURE__*/React.createElement("span", {
+    }, "WO") : p.encerradoPorTempo ? /*#__PURE__*/React.createElement("span", {
+      className: "badge badge-yellow",
+      style: {
+        fontSize: 9
+      }
+    }, "Tempo esgotado") : p.desistiu ? /*#__PURE__*/React.createElement("span", {
       className: "badge badge-orange",
       style: {
         fontSize: 9
@@ -3929,7 +3975,7 @@ function Jogos() {
         color: 'var(--gold-dk)',
         marginBottom: 2
       }
-    }, isWO ? 'Vit\u00f3ria por WO' : p.desistiu ? 'Vit\u00f3ria por desist\u00eancia' : 'Vencedor'), /*#__PURE__*/React.createElement("div", {
+    }, isWO ? 'Vit\u00f3ria por WO' : p.desistiu ? 'Vit\u00f3ria por desist\u00eancia' : p.encerradoPorTempo ? 'Vencedor no tempo de quadra' : 'Vencedor'), /*#__PURE__*/React.createElement("div", {
       style: {
         fontSize: 16,
         fontWeight: 800,
