@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260925_0945 copa-gs-v9 -->
+<!-- Build: 20260925_1005 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -644,7 +644,13 @@ input:focus, select:focus, textarea:focus {
 .sidebar.open { transform: translateX(0); }
 .sidebar-overlay.open { display: block; }
 a.nav-item { text-decoration: none; }
-.justify-center{justify-content:center}.f1{flex:1}.items-end{align-items:flex-end}@keyframes spin{to{transform:rotate(360deg)}}</style>
+
+/* Integrantes das academias — nomes em uma linha só */
+.integ-nomes { font-size: 12.5px; line-height: 1.5 }
+@media (max-width: 430px) {
+  .integ-nomes { font-size: 11px; letter-spacing: -.012em }
+}
+</style>
 </head>
 <body>
 <div id="root"></div>
@@ -2489,16 +2495,20 @@ function Grupos() {
           if (!membros.length) return null;
           return React.createElement("div", { key: cat,
             style: { display: 'flex', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--bg4)' } },
-            React.createElement("span", { style: { fontSize: 10, fontWeight: 700, color: 'var(--gold)',
-              textTransform: 'uppercase', letterSpacing: '.06em', width: 64, flexShrink: 0,
+            React.createElement("span", { style: { fontSize: 9.5, fontWeight: 700, color: 'var(--gold)',
+              textTransform: 'uppercase', letterSpacing: '.04em', width: 52, flexShrink: 0,
               paddingTop: 2 } }, cat),
-            React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 13, fontWeight: 500,
-              color: 'var(--text)', lineHeight: 1.45 } },
+            React.createElement("span", { className: "integ-nomes", style: { flex: 1, minWidth: 0,
+              fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden',
+              textOverflow: 'ellipsis' } },
               membros.map((a, ix) => React.createElement(React.Fragment, { key: a.id },
                 ix > 0 ? React.createElement("span", { style: { color: 'var(--dim)', fontWeight: 400 } }, " e ") : null,
-                React.createElement("span", {
-                  style: { color: isBye(a) ? 'var(--yellow)' : isDesistente(a) ? 'var(--red)' : 'var(--text)' }
-                }, isBye(a) ? '⚠ BYE' : (isDesistente(a) ? '✗ ' : '') + a.nome)))));
+                isBye(a)
+                  ? React.createElement("span", { style: { color: 'var(--dim)', fontStyle: 'italic',
+                      fontWeight: 400 } }, "Não indicado")
+                  : React.createElement("span", {
+                      style: { color: isDesistente(a) ? 'var(--red)' : 'var(--text)' }
+                    }, isDesistente(a) ? '✗ ' + a.nome : a.nome)))));
         })))));
   const acadMap = Object.fromEntries(academias.map(a => [a.id, a]));
   const atletasCat = atletas.filter(a => a.categoria === catAtiva);
