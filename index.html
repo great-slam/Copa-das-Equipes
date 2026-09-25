@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260924_0229 copa-gs-v9 -->
+<!-- Build: 20260925_0930 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -2475,6 +2475,17 @@ function Grupos() {
     atletas
   } = state;
   const [catAtiva, setCatAtiva] = React.useState(CATEGORIAS[0]);
+  const [vista, setVista] = React.useState('cat');
+  const [acadAtiva, setAcadAtiva] = React.useState('');
+  const tituloBlk = t => React.createElement("div", {
+    style: { background: 'var(--bg2)', border: '1px solid var(--bg4)', borderRadius: 10,
+      padding: '12px 16px', textAlign: 'center', marginBottom: 4 }
+  }, React.createElement("div", { className: "section-title", style: { margin: 0, textAlign: 'center' } }, t));
+  const vistaBlk = React.createElement("div", { className: "cat-pills", style: { marginBottom: 2 } },
+    React.createElement("button", { className: "cat-pill" + (vista === 'cat' ? ' active' : ''),
+      onClick: () => setVista('cat') }, "Por categoria"),
+    React.createElement("button", { className: "cat-pill" + (vista === 'eq' ? ' active' : ''),
+      onClick: () => setVista('eq') }, "Por equipe"));
   const acadMap = Object.fromEntries(academias.map(a => [a.id, a]));
   const atletasCat = atletas.filter(a => a.categoria === catAtiva);
   const getSlot = (g, o) => atletasCat.find(a => a.grupo === g && a.ordem === o) || null;
@@ -2503,6 +2514,39 @@ function Grupos() {
     if (dup.length) erros.push(`Grupo ${g}: academia duplicada (${(_acadMap$dup$ = acadMap[dup[0]]) === null || _acadMap$dup$ === void 0 ? void 0 : _acadMap$dup$.nome})`);
   }
 
+  // ── Vista por equipe (público e admin) ──
+  if (vista === 'eq') {
+    const acId = acadAtiva || ((academias[0] || {}).id);
+    const meus = atletas.filter(a => a.academiId === acId);
+    return React.createElement("div", { className: "space" },
+      tituloBlk("🎾 GRUPOS POR EQUIPE"),
+      vistaBlk,
+      React.createElement("div", { className: "cat-pills" }, academias.map(ac =>
+        React.createElement("button", { key: ac.id,
+          className: "cat-pill" + (acId === ac.id ? ' active' : ''),
+          onClick: () => setAcadAtiva(ac.id) }, ac.nome))),
+      React.createElement("div", { className: "g2" }, ['A', 'B'].map(g =>
+        React.createElement("div", { key: g, className: "card card-p" },
+          React.createElement("div", { className: "section-title" }, "Grupo ", g),
+          CATEGORIAS.map(cat => {
+            const at = meus.find(a => a.categoria === cat && a.grupo === g);
+            return React.createElement("div", { key: cat,
+              style: { display: 'flex', alignItems: 'center', gap: 8, padding: '7px 0',
+                borderBottom: '1px solid var(--bg4)' } },
+              React.createElement("span", { style: { fontSize: 10, fontWeight: 700,
+                color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '.06em',
+                width: 64, flexShrink: 0 } }, cat),
+              at
+                ? React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 13,
+                    fontWeight: 500,
+                    color: isBye(at) ? 'var(--yellow)' : isDesistente(at) ? 'var(--red)' : 'var(--text)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
+                    isBye(at) ? '⚠ ' : isDesistente(at) ? '✗ ' : '', at.nome)
+                : React.createElement("span", { style: { fontSize: 12, color: 'var(--dim)',
+                    fontStyle: 'italic' } }, "Vaga em aberto"));
+          })))));
+  }
+
   // ── Modo Público: só visualização ──
   if (!isAdmin) return /*#__PURE__*/React.createElement("div", {
     className: "space"
@@ -2514,7 +2558,7 @@ function Grupos() {
       className: "section-title",
       style:{margin:0,textAlign:'center'}
     }, "🎾 GRUPOS POR CATEGORIA")
-  ), /*#__PURE__*/React.createElement("div", {
+  ), vistaBlk, /*#__PURE__*/React.createElement("div", {
     className: "cat-pills"
   }, CATEGORIAS.map(c => /*#__PURE__*/React.createElement("button", {
     key: c,
@@ -2592,7 +2636,7 @@ function Grupos() {
       className: "section-title",
       style:{margin:0,textAlign:'center'}
     }, "🎾 GRUPOS POR CATEGORIA")
-  ), /*#__PURE__*/React.createElement("div", {
+  ), vistaBlk, /*#__PURE__*/React.createElement("div", {
     className: "cat-pills"
   }, CATEGORIAS.map(c => /*#__PURE__*/React.createElement("button", {
     key: c,
