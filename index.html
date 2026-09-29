@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260928_0810 copa-gs-v9 -->
+<!-- Build: 20260928_2200 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -667,6 +667,15 @@ a.nav-item { text-decoration: none; }
   font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
   white-space: nowrap;
 }
+
+/* Faixa do modo preparação (admin) */
+.faixa-arquivo.faixa-prep {
+  background: rgba(96,165,250,.10); border-color: rgba(96,165,250,.32); color: var(--blue);
+}
+.faixa-arquivo.faixa-prep strong { color: var(--blue) }
+.faixa-arquivo.faixa-prep button {
+  background: rgba(96,165,250,.16); border-color: rgba(96,165,250,.35); color: var(--blue);
+}
 </style>
 </head>
 <body>
@@ -1027,6 +1036,11 @@ const saveState = s => {
 };
 const normNome = s => (s || '').toString().trim().toLowerCase()
   .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
+const rotuloEd = ed => {
+  const nome = (ed && ed.nome) || 'Copa das Equipes';
+  const ano = ed && ed.ano ? String(ed.ano) : '';
+  return ano && nome.indexOf(ano) < 0 ? nome + ' ' + ano : nome;
+};
 const EDICAO_PADRAO = { id: '2026', nome: 'Copa das Equipes', ano: 2026, encerrada: false };
 const edicaoDe = s => s && s.edicao ? s.edicao : EDICAO_PADRAO;
 const PARES_RR = [[[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]]];
@@ -1320,8 +1334,9 @@ function CopaProvider({
             atStatus: a.isBye ? AT_STATUS.BYE : AT_STATUS.ATIVO }))
       : [];
     commit({
-      edicao: { id: String(cfg.ano), nome: cfg.nome || ('Copa das Equipes ' + cfg.ano),
-        ano: cfg.ano, encerrada: false },
+      edicao: { id: String(cfg.ano), nome: (cfg.nome || '').trim() || 'Copa das Equipes',
+        ano: cfg.ano, encerrada: false, preparacao: true,
+        aviso: { chamada: '', texto: '', datas: [], inscricoes: '' } },
       academias: acs,
       atletas: ats,
       partidas: cfg.trazerAtletas ? gerarPartidas(ats) : []
@@ -1330,8 +1345,30 @@ function CopaProvider({
   const regerarTabela = () => commit(_objectSpread(_objectSpread({}, state), {}, {
     partidas: gerarPartidas(state.atletas)
   }));
+  // ── Preparação: a edição nova fica invisível ao público até ser publicada ──
+  const emPreparacao = !!edicaoDe(state).preparacao;
+  const idAnterior = edicoes.length ? edicoes[0].id : '';
+  const [anterior, setAnterior] = React.useState(null);
+  React.useEffect(function () {
+    if (!emPreparacao || !idAnterior || isAdmin) return;
+    if (anterior && edicaoDe(anterior).id === idAnterior) return;
+    if (window._fbGetArquivo) window._fbGetArquivo(idAnterior).then(function (st) { if (st) setAnterior(st); });
+  }, [emPreparacao, idAnterior, isAdmin]);
+  const mostrandoAnterior = emPreparacao && !isAdmin && !!anterior;
   const vendoArquivo = !!(verId && arquivo);
-  const stateVisivel = vendoArquivo ? arquivo : state;
+  const stateVisivel = vendoArquivo ? arquivo : (mostrandoAnterior ? anterior : state);
+  const publicarEdicao = () => {
+    const ed = edicaoDe(state);
+    commit(_objectSpread(_objectSpread({}, state), {}, {
+      edicao: _objectSpread(_objectSpread({}, ed), {}, { preparacao: false })
+    }));
+  };
+  const salvarAviso = aviso => {
+    const ed = edicaoDe(state);
+    commit(_objectSpread(_objectSpread({}, state), {}, {
+      edicao: _objectSpread(_objectSpread({}, ed), {}, { aviso })
+    }));
+  };
   const commit = React.useCallback(s => {
     setState(s);
     saveState(s);
@@ -1689,6 +1726,10 @@ function CopaProvider({
       renomearPessoa,
       unificarPessoas,
       migrarBase,
+      emPreparacao,
+      mostrandoAnterior,
+      publicarEdicao,
+      salvarAviso,
       loginAdmin,
       logoutAdmin,
       addAcademia,
@@ -1825,7 +1866,10 @@ function Layout({
     logoutAdmin,
     edicao,
     vendoArquivo,
-    verEdicao
+    verEdicao,
+    edicaoAtual,
+    emPreparacao,
+    mostrandoAnterior
   } = useCopa();
   const [open, setOpen] = React.useState(false);
   const [showLogin, setShowLogin] = React.useState(false);
@@ -2036,6 +2080,10 @@ function Layout({
     className: "nav-item",
     onClick: () => go('contatos')
   }, /*#__PURE__*/React.createElement(IcPhone, null), /*#__PURE__*/React.createElement("span", null, "Contatos")),
+  (emPreparacao || isAdmin) && /*#__PURE__*/React.createElement("div", {
+    className: "nav-item" + (page === 'proxima' ? ' active' : ''),
+    onClick: () => go('proxima')
+  }, /*#__PURE__*/React.createElement(IcFlag, null), /*#__PURE__*/React.createElement("span", null, "Próxima Copa")),
   isAdmin && /*#__PURE__*/React.createElement("div", {
     className: "nav-item" + (page === 'baseatletas' ? ' active' : ''),
     onClick: () => go('baseatletas')
@@ -2067,14 +2115,35 @@ function Layout({
       }, /*#__PURE__*/React.createElement(IcUser, { size: 16 }),
          /*#__PURE__*/React.createElement("span", null, "Admin"))), /*#__PURE__*/React.createElement("main", {
     className: "content"
-  }, vendoArquivo && /*#__PURE__*/React.createElement("div", {
-    className: "faixa-arquivo"
-  }, /*#__PURE__*/React.createElement("span", null,
-       "Você está vendo a ", /*#__PURE__*/React.createElement("strong", null, edicao.nome + ' ' + edicao.ano),
-       " — edição encerrada."),
-     /*#__PURE__*/React.createElement("button", {
-       onClick: () => verEdicao('')
-     }, "Voltar ao atual")), children)), /*#__PURE__*/React.createElement("nav", {
+  }, vendoArquivo
+       ? /*#__PURE__*/React.createElement("div", {
+           className: "faixa-arquivo"
+         }, /*#__PURE__*/React.createElement("span", null,
+              "Você está vendo a ", /*#__PURE__*/React.createElement("strong", null, rotuloEd(edicao)),
+              " — edição encerrada."),
+            /*#__PURE__*/React.createElement("button", {
+              onClick: () => verEdicao('')
+            }, "Voltar ao atual"))
+       : emPreparacao && isAdmin
+         ? /*#__PURE__*/React.createElement("div", {
+             className: "faixa-arquivo faixa-prep"
+           }, /*#__PURE__*/React.createElement("span", null,
+                "Modo preparação: os atletas ainda veem a edição anterior."),
+              /*#__PURE__*/React.createElement("button", {
+                onClick: () => setPage('proxima')
+              }, "Anúncio e publicação"))
+         : emPreparacao
+           ? /*#__PURE__*/React.createElement("div", {
+               className: "faixa-arquivo"
+             }, /*#__PURE__*/React.createElement("span", null,
+                  /*#__PURE__*/React.createElement("strong", null, rotuloEd(edicaoAtual)),
+                  mostrandoAnterior
+                    ? " está sendo preparada. Você está vendo a edição de " + edicao.ano + "."
+                    : " está sendo preparada."),
+                /*#__PURE__*/React.createElement("button", {
+                  onClick: () => setPage('proxima')
+                }, "Ver a próxima"))
+           : null, children)), /*#__PURE__*/React.createElement("nav", {
     className: "bottom-nav"
   }, /*#__PURE__*/React.createElement("div", {
     className: "bn-items"
@@ -6145,7 +6214,7 @@ function Edicoes() {
   });
 
   const encerrar = async () => {
-    if (!window.confirm('Encerrar "' + edicaoAtual.nome + ' ' + edicaoAtual.ano +
+    if (!window.confirm('Encerrar "' + rotuloEd(edicaoAtual) +
       '" e guardá-la no histórico?\n\nOs resultados ficam congelados e passam a ser somente leitura.')) return;
     setBusy('encerrar'); setMsg(null);
     const r = await encerrarEdicao();
@@ -6183,7 +6252,7 @@ function Edicoes() {
 
     React.createElement("div", { className: "card card-p" },
       React.createElement("div", { className: "section-title" }, "Edição atual"),
-      linha("Nome", edicaoAtual.nome),
+      linha("Nome", rotuloEd(edicaoAtual)),
       linha("Ano", String(edicaoAtual.ano)),
       linha("Situação", edicaoAtual.encerrada ? "Encerrada — no histórico" : "Em andamento"),
       vendoArquivo
@@ -6202,7 +6271,7 @@ function Edicoes() {
               borderBottom: '1px solid var(--bg4)' } },
             React.createElement("div", { style: { flex: 1, minWidth: 0 } },
               React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: 'var(--text)' } },
-                e.nome + ' ' + e.ano),
+                rotuloEd(e)),
               React.createElement("div", { style: { fontSize: 11, color: 'var(--dim)', marginTop: 2 } },
                 e.campea ? '🏆 ' + e.campea : 'Campeã não registrada')),
             verId === e.id
@@ -6386,6 +6455,142 @@ function BaseAtletas() {
                   React.createElement("option", { key: o.pid, value: o.pid }, o.nome)))))))); 
 }
 
+// ── Próxima Copa (edição em preparação) ───────────────────────────────────────
+function ProximaCopa() {
+  const { edicaoAtual, emPreparacao, isAdminReal, salvarAviso, publicarEdicao } = useCopa();
+  const aviso = edicaoAtual.aviso || { chamada: '', texto: '', datas: [], inscricoes: '' };
+  const [ed, setEd] = React.useState(null);
+  const [msg, setMsg] = React.useState('');
+
+  const abrir = () => setEd({
+    chamada: aviso.chamada || '',
+    texto: aviso.texto || '',
+    inscricoes: aviso.inscricoes || '',
+    datas: (aviso.datas || []).map(d => ({ quando: d.quando, oque: d.oque }))
+  });
+  const salvar = () => {
+    salvarAviso({
+      chamada: ed.chamada.trim(),
+      texto: ed.texto.trim(),
+      inscricoes: ed.inscricoes.trim(),
+      datas: ed.datas.filter(d => (d.quando || '').trim() || (d.oque || '').trim())
+    });
+    setEd(null); setMsg('Informações salvas. Os atletas já veem esta tela atualizada.');
+  };
+  const upData = (i, campo, val) => setEd(f => {
+    const ds = f.datas.slice();
+    ds[i] = Object.assign({}, ds[i], { [campo]: val });
+    return Object.assign({}, f, { datas: ds });
+  });
+  const publicar = () => {
+    if (!window.confirm('Publicar a ' + rotuloEd(edicaoAtual) + '?\n\n' +
+      'A partir de agora todos os atletas passam a ver esta edição, e não mais a anterior.')) return;
+    publicarEdicao();
+    setMsg('Edição publicada. Os atletas já estão vendo a ' + rotuloEd(edicaoAtual) + '.');
+  };
+
+  const temConteudo = (aviso.chamada || aviso.texto || aviso.inscricoes ||
+    (aviso.datas && aviso.datas.length));
+
+  return React.createElement("div", { className: "space" },
+    React.createElement("div", {
+      style: { background: 'var(--bg2)', border: '1px solid var(--bg4)', borderRadius: 10,
+        padding: '12px 16px', textAlign: 'center', marginBottom: 4 }
+    }, React.createElement("div", { className: "section-title", style: { margin: 0, textAlign: 'center' } },
+      "🎾 PRÓXIMA COPA")),
+
+    msg && React.createElement("div", { className: "alert alert-green" },
+      React.createElement(IcCheck, { size: 14 }), React.createElement("div", null, msg)),
+
+    // ── Cartaz ──
+    React.createElement("div", { className: "card card-p", style: { textAlign: 'center' } },
+      React.createElement("div", { style: { fontSize: 11, fontWeight: 700, color: 'var(--gold)',
+        textTransform: 'uppercase', letterSpacing: '.12em' } },
+        emPreparacao ? "Em preparação" : "Edição atual"),
+      React.createElement("div", { style: { fontFamily: "'Cormorant Garamond', Georgia, serif",
+        fontSize: 30, fontWeight: 700, color: 'var(--text)', lineHeight: 1.15, marginTop: 6 } },
+        (edicaoAtual.nome || 'Copa das Equipes').replace(String(edicaoAtual.ano), '').trim()),
+      React.createElement("div", { style: { fontSize: 34, fontWeight: 700, color: 'var(--gold)',
+        fontFamily: "'Cormorant Garamond', Georgia, serif", lineHeight: 1 } }, edicaoAtual.ano),
+      aviso.chamada && React.createElement("div", { style: { fontSize: 14, color: 'var(--text)',
+        marginTop: 12, fontWeight: 600 } }, aviso.chamada)),
+
+    aviso.texto && React.createElement("div", { className: "card card-p" },
+      React.createElement("div", { style: { fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.7,
+        whiteSpace: 'pre-wrap' } }, aviso.texto)),
+
+    aviso.datas && aviso.datas.length > 0 && React.createElement("div", { className: "card card-p" },
+      React.createElement("div", { className: "section-title" }, "Datas"),
+      aviso.datas.map((d, i) => React.createElement("div", { key: i,
+        style: { display: 'flex', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--bg4)' } },
+        React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: 'var(--gold)',
+          width: 92, flexShrink: 0 } }, d.quando),
+        React.createElement("span", { style: { flex: 1, fontSize: 13, color: 'var(--text)' } }, d.oque)))),
+
+    aviso.inscricoes && React.createElement("div", { className: "card card-p" },
+      React.createElement("div", { className: "section-title" }, "Inscrições"),
+      React.createElement("div", { style: { fontSize: 13.5, color: 'var(--muted)', lineHeight: 1.7,
+        whiteSpace: 'pre-wrap' } }, aviso.inscricoes),
+      React.createElement("a", { className: "btn btn-gold",
+        href: "https://api.whatsapp.com/send?phone=5585981182225&text=" +
+          encodeURIComponent("Olá, vi o anúncio da " + rotuloEd(edicaoAtual) + " no app e gostaria de me inscrever."),
+        target: "_blank", rel: "noopener",
+        style: { display: 'block', textAlign: 'center', textDecoration: 'none', marginTop: 12 } },
+        "Falar com a organização")),
+
+    !temConteudo && !isAdminReal && React.createElement("div", { className: "card card-p" },
+      React.createElement("p", { style: { fontSize: 13.5, color: 'var(--muted)', margin: 0,
+        lineHeight: 1.7, textAlign: 'center' } },
+        "A próxima Copa das Equipes está sendo organizada. As datas e as informações de inscrição serão publicadas aqui.")),
+
+    // ── Admin ──
+    isAdminReal && React.createElement("div", { className: "card card-p" },
+      React.createElement("div", { className: "section-title" }, "Administração"),
+      !ed
+        ? React.createElement("div", null,
+            React.createElement("button", { className: "btn", style: { width: '100%', marginBottom: 8 },
+              onClick: abrir }, temConteudo ? "Editar informações" : "Preencher informações"),
+            emPreparacao
+              ? React.createElement("div", null,
+                  React.createElement("p", { style: { fontSize: 12.5, color: 'var(--muted)', lineHeight: 1.6 } },
+                    "Enquanto estiver em preparação, os atletas continuam vendo a edição anterior e esta tela de anúncio. Publique quando a Copa for começar."),
+                  React.createElement("button", { className: "btn btn-gold", style: { width: '100%' },
+                    onClick: publicar }, "Publicar a " + rotuloEd(edicaoAtual)))
+              : React.createElement("p", { style: { fontSize: 12.5, color: 'var(--dim)', margin: 0 } },
+                  "Esta edição já está publicada."))
+        : React.createElement("div", null,
+            React.createElement("label", null, "Chamada (uma linha)"),
+            React.createElement("input", { value: ed.chamada, placeholder: "Ex: Inscrições abertas até 15 de março",
+              onChange: e => setEd(f => Object.assign({}, f, { chamada: e.target.value })) }),
+            React.createElement("label", { style: { marginTop: 10 } }, "Texto de apresentação"),
+            React.createElement("textarea", { value: ed.texto, rows: 5,
+              placeholder: "Formato, academias participantes, categorias, o que mudou nesta edição…",
+              onChange: e => setEd(f => Object.assign({}, f, { texto: e.target.value })) }),
+            React.createElement("div", { className: "section-title", style: { marginTop: 16 } }, "Datas"),
+            ed.datas.map((d, i) => React.createElement("div", { key: i,
+              style: { display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 } },
+              React.createElement("input", { value: d.quando || '', placeholder: "15/03",
+                style: { flex: 1, minWidth: 0 }, onChange: e => upData(i, 'quando', e.target.value) }),
+              React.createElement("input", { value: d.oque || '', placeholder: "1ª rodada",
+                style: { flex: 2, minWidth: 0 }, onChange: e => upData(i, 'oque', e.target.value) }),
+              React.createElement("button", { className: "btn btn-sm",
+                onClick: () => setEd(f => Object.assign({}, f,
+                  { datas: f.datas.filter((_, k) => k !== i) })) },
+                React.createElement(IcTrash, { size: 14 })))),
+            React.createElement("button", { className: "btn btn-sm",
+              onClick: () => setEd(f => Object.assign({}, f,
+                { datas: f.datas.concat([{ quando: '', oque: '' }]) })) }, "+ Acrescentar data"),
+            React.createElement("label", { style: { marginTop: 16 } }, "Inscrições"),
+            React.createElement("textarea", { value: ed.inscricoes, rows: 3,
+              placeholder: "Como se inscrever, prazo, valor, forma de pagamento…",
+              onChange: e => setEd(f => Object.assign({}, f, { inscricoes: e.target.value })) }),
+            React.createElement("div", { style: { display: 'flex', gap: 8, marginTop: 12 } },
+              React.createElement("button", { className: "btn btn-gold", style: { flex: 1 },
+                onClick: salvar }, "Salvar"),
+              React.createElement("button", { className: "btn", style: { flex: 1 },
+                onClick: () => setEd(null) }, "Cancelar")))));
+}
+
 function App() {
   const [page, setPage] = React.useState('classificacao');
   React.useEffect(function () {
@@ -6406,7 +6611,8 @@ function App() {
     contatos: /*#__PURE__*/React.createElement(Contatos, null),
     estatisticas: /*#__PURE__*/React.createElement(Estatisticas, null),
     edicoes: /*#__PURE__*/React.createElement(Edicoes, null),
-    baseatletas: /*#__PURE__*/React.createElement(BaseAtletas, null)
+    baseatletas: /*#__PURE__*/React.createElement(BaseAtletas, null),
+    proxima: /*#__PURE__*/React.createElement(ProximaCopa, null)
   };
   return /*#__PURE__*/React.createElement(CopaProvider, null, /*#__PURE__*/React.createElement(Layout, {
     page: page,
