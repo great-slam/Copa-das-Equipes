@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260925_1005 copa-gs-v9 -->
+<!-- Build: 20260928_0730 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -11,6 +11,7 @@
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta property="og:url" content="https://great-slam.github.io/Copa-das-Equipes/"/>
+<link rel="canonical" href="https://great-slam.github.io/Copa-das-Equipes/"/>
 <meta property="og:type" content="website"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="Copa das Equipes – Great Slam 2026"/>
@@ -650,6 +651,22 @@ a.nav-item { text-decoration: none; }
 @media (max-width: 430px) {
   .integ-nomes { font-size: 11px; letter-spacing: -.012em }
 }
+
+/* Faixa de edição arquivada */
+.faixa-arquivo {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  flex-wrap: wrap;
+  background: var(--yellow-dim); border: 1px solid rgba(251,191,36,.3);
+  color: var(--yellow); border-radius: var(--radius-sm);
+  padding: 10px 14px; font-size: 12.5px; line-height: 1.45; margin-bottom: 12px;
+}
+.faixa-arquivo strong { color: var(--yellow); font-weight: 700 }
+.faixa-arquivo button {
+  background: rgba(251,191,36,.16); border: 1px solid rgba(251,191,36,.35);
+  color: var(--yellow); border-radius: 999px; padding: 5px 12px;
+  font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer;
+  white-space: nowrap;
+}
 </style>
 </head>
 <body>
@@ -722,6 +739,57 @@ window._saveToFirebase = async function(stateObj) {
 };
 
 window._checkAdminPassword = function(pwd) { return pwd === 'gs.988721'; };
+
+// ── Arquivo de edições ────────────────────────────────────────────────────
+// copa/edicoes        → { lista: [ {id, nome, ano, campea, encerradaEm} ] }
+// copa/ed-<id>        → { state: {...} }  (congelado, nunca mais alterado)
+
+window._fbGetEdicoes = async function() {
+  var ok = await window._initFirebase();
+  if (!ok) return null;
+  try {
+    var snap = await window._fbDb.collection('copa').doc('edicoes').get();
+    if (!snap.exists) return [];
+    return snap.data().lista || [];
+  } catch(e) { console.warn('[FB] edicoes:', e); return null; }
+};
+
+window._fbSalvarEdicoes = async function(lista) {
+  var ok = await window._initFirebase();
+  if (!ok) return false;
+  try {
+    await window._fbDb.collection('copa').doc('edicoes').set({ lista: lista });
+    return true;
+  } catch(e) { console.warn('[FB] salvar edicoes:', e); return false; }
+};
+
+window._fbGetArquivo = async function(id) {
+  // edição encerrada nunca muda: se já está em cache, nem consulta a rede
+  try {
+    var cache = localStorage.getItem('copa-gs-ed-' + id);
+    if (cache) return JSON.parse(cache);
+  } catch(e) {}
+  var ok = await window._initFirebase();
+  if (!ok) return null;
+  try {
+    var snap = await window._fbDb.collection('copa').doc('ed-' + id).get();
+    if (!snap.exists) return null;
+    var st = snap.data().state;
+    try { localStorage.setItem('copa-gs-ed-' + id, JSON.stringify(st)); } catch(e) {}
+    return st;
+  } catch(e) { console.warn('[FB] arquivo ' + id + ':', e); return null; }
+};
+
+window._fbSalvarArquivo = async function(id, stateObj) {
+  var ok = await window._initFirebase();
+  if (!ok) return false;
+  try {
+    await window._fbDb.collection('copa').doc('ed-' + id).set({ state: stateObj });
+    try { localStorage.setItem('copa-gs-ed-' + id, JSON.stringify(stateObj)); } catch(e) {}
+    console.log('[FB] Edição ' + id + ' arquivada');
+    return true;
+  } catch(e) { console.warn('[FB] arquivar:', e); return false; }
+};
 </script>
 <script>// Admin mode — Copa das Equipes Great Slam 2026
 window._fbListening = false;
@@ -932,6 +1000,34 @@ const saveState = s => {
       .catch(function(e){ console.warn('[FB] Erro:', e); });
   }
 };
+const EDICAO_PADRAO = { id: '2026', nome: 'Copa das Equipes', ano: 2026, encerrada: false };
+const edicaoDe = s => s && s.edicao ? s.edicao : EDICAO_PADRAO;
+const PARES_RR = [[[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]]];
+function gerarPartidas(atletas) {
+  const out = [];
+  for (const cat of CATEGORIAS) for (const g of ['A', 'B']) {
+    const porOrdem = {};
+    atletas.forEach(a => {
+      if (a.categoria === cat && a.grupo === g) porOrdem[a.ordem] = a;
+    });
+    let jogoIdx = 0;
+    PARES_RR.forEach((rodada, rIdx) => {
+      rodada.forEach(par => {
+        const a1 = porOrdem[par[0]], a2 = porOrdem[par[1]];
+        if (!a1 || !a2) return;
+        out.push({
+          id: uid(), categoria: cat, grupo: g,
+          atleta1Id: a1.id, atleta2Id: a2.id,
+          acad1Id: a1.academiId, acad2Id: a2.academiId,
+          sets1: null, sets2: null, games1: null, games2: null, superTb: null,
+          status: isBye(a1) || isBye(a2) ? ST.BYE : ST.PENDENTE,
+          vencedor: null, porWO: false, rodadaIdx: rIdx, jogoIdx: jogoIdx++
+        });
+      });
+    });
+  }
+  return out;
+}
 function rodada1Enc(partidas, cat, grupo) {
   const ps = partidas.filter(p => p.categoria === cat && p.grupo === grupo).sort((a, b) => a.rodadaIdx - b.rodadaIdx || a.jogoIdx - b.jogoIdx);
   if (ps.length < 2) return false;
@@ -1065,6 +1161,80 @@ function CopaProvider({
     return false;
   };
   const logoutAdmin = () => { setIsAdmin(false); sessionStorage.removeItem('gs_admin'); window._fbAdminMode = false; };
+  // ── Edições: índice, arquivo consultado, modo somente-leitura ──
+  const [edicoes, setEdicoes] = React.useState(function () {
+    try { return JSON.parse(localStorage.getItem('copa-gs-edicoes') || '[]'); } catch (e) { return []; }
+  });
+  const [verId, setVerId] = React.useState(function () {
+    try { return sessionStorage.getItem('gs_ed') || ''; } catch (e) { return ''; }
+  });
+  const [arquivo, setArquivo] = React.useState(null);
+  const [edCarregando, setEdCarregando] = React.useState(false);
+  const [edErro, setEdErro] = React.useState('');
+  React.useEffect(function () {
+    if (!window._fbGetEdicoes) return;
+    window._fbGetEdicoes().then(function (l) {
+      if (!l) return;
+      setEdicoes(l);
+      try { localStorage.setItem('copa-gs-edicoes', JSON.stringify(l)); } catch (e) {}
+    });
+  }, []);
+  const verEdicao = async id => {
+    setEdErro('');
+    if (!id) { setVerId(''); setArquivo(null); try { sessionStorage.removeItem('gs_ed'); } catch (e) {} return; }
+    setEdCarregando(true);
+    const st = window._fbGetArquivo ? await window._fbGetArquivo(id) : null;
+    setEdCarregando(false);
+    if (!st) { setEdErro('Não foi possível carregar esta edição. Verifique a conexão.'); return; }
+    setArquivo(st); setVerId(id);
+    try { sessionStorage.setItem('gs_ed', id); } catch (e) {}
+  };
+  React.useEffect(function () {
+    if (verId && !arquivo && !edCarregando) verEdicao(verId);
+  }, []);
+  const encerrarEdicao = async () => {
+    const ed = edicaoDe(state);
+    const cl = calcClass(state);
+    const campea = cl[0] ? cl[0].nome : '';
+    const hoje = new Date().toISOString().slice(0, 10);
+    const congelado = _objectSpread(_objectSpread({}, state), {}, {
+      edicao: _objectSpread(_objectSpread({}, ed), {}, { encerrada: true, encerradaEm: hoje, campea })
+    });
+    const ok = window._fbSalvarArquivo ? await window._fbSalvarArquivo(ed.id, congelado) : false;
+    if (!ok) return { ok: false, msg: 'Não foi possível gravar o arquivo da edição. Verifique a conexão e tente de novo.' };
+    const lista = [{ id: ed.id, nome: ed.nome, ano: ed.ano, campea, encerradaEm: hoje }]
+      .concat(edicoes.filter(e => e.id !== ed.id))
+      .sort((a, b) => b.ano - a.ano);
+    if (window._fbSalvarEdicoes) await window._fbSalvarEdicoes(lista);
+    setEdicoes(lista);
+    try { localStorage.setItem('copa-gs-edicoes', JSON.stringify(lista)); } catch (e) {}
+    commit(congelado);
+    return { ok: true, campea };
+  };
+  const novaEdicao = cfg => {
+    const acs = (cfg.academias || []).filter(a => a.nome && a.nome.trim())
+      .map(a => ({ id: a.id || uid(), nome: a.nome.trim(), capitao: (a.capitao || '').trim() }));
+    const validos = {};
+    acs.forEach(a => { validos[a.id] = true; });
+    const ats = cfg.trazerAtletas
+      ? state.atletas.filter(a => validos[a.academiId])
+          .map(a => ({ id: uid(), nome: a.nome, academiId: a.academiId, categoria: a.categoria,
+            grupo: a.grupo, ordem: a.ordem, isBye: !!a.isBye,
+            atStatus: a.isBye ? AT_STATUS.BYE : AT_STATUS.ATIVO }))
+      : [];
+    commit({
+      edicao: { id: String(cfg.ano), nome: cfg.nome || ('Copa das Equipes ' + cfg.ano),
+        ano: cfg.ano, encerrada: false },
+      academias: acs,
+      atletas: ats,
+      partidas: cfg.trazerAtletas ? gerarPartidas(ats) : []
+    });
+  };
+  const regerarTabela = () => commit(_objectSpread(_objectSpread({}, state), {}, {
+    partidas: gerarPartidas(state.atletas)
+  }));
+  const vendoArquivo = !!(verId && arquivo);
+  const stateVisivel = vendoArquivo ? arquivo : state;
   const commit = React.useCallback(s => {
     setState(s);
     saveState(s);
@@ -1390,10 +1560,22 @@ function CopaProvider({
   };
   return /*#__PURE__*/React.createElement(Ctx.Provider, {
     value: {
-      state,
+      state: stateVisivel,
       ST,
       AT_STATUS,
-      isAdmin,
+      isAdmin: isAdmin && !vendoArquivo,
+      isAdminReal: isAdmin,
+      edicao: edicaoDe(stateVisivel),
+      edicaoAtual: edicaoDe(state),
+      edicoes,
+      verId,
+      vendoArquivo,
+      verEdicao,
+      edCarregando,
+      edErro,
+      encerrarEdicao,
+      novaEdicao,
+      regerarTabela,
       loginAdmin,
       logoutAdmin,
       addAcademia,
@@ -1527,7 +1709,10 @@ function Layout({
   const {
     isAdmin,
     loginAdmin,
-    logoutAdmin
+    logoutAdmin,
+    edicao,
+    vendoArquivo,
+    verEdicao
   } = useCopa();
   const [open, setOpen] = React.useState(false);
   const [showLogin, setShowLogin] = React.useState(false);
@@ -1629,7 +1814,7 @@ function Layout({
     className: "brand-main"
   }, "COPA DAS"), /*#__PURE__*/React.createElement("div", {
     className: "brand-sub"
-  }, "EQUIPES 2026")), /*#__PURE__*/React.createElement("div", {
+  }, "EQUIPES " + edicao.ano)), /*#__PURE__*/React.createElement("div", {
     className: "topbar-right"
   }, /*#__PURE__*/React.createElement("button", {
     className: "menu-btn",
@@ -1739,6 +1924,10 @@ function Layout({
     onClick: () => go('contatos')
   }, /*#__PURE__*/React.createElement(IcPhone, null), /*#__PURE__*/React.createElement("span", null, "Contatos")),
   /*#__PURE__*/React.createElement("div", {
+    className: "nav-item" + (page === 'edicoes' ? ' active' : ''),
+    onClick: () => go('edicoes')
+  }, /*#__PURE__*/React.createElement(IcHistory, null), /*#__PURE__*/React.createElement("span", null, "Edições")),
+  /*#__PURE__*/React.createElement("div", {
     className: "sidebar-section-title",
     style: { marginTop: 8 }
   }, "Great Slam"),
@@ -1761,7 +1950,14 @@ function Layout({
       }, /*#__PURE__*/React.createElement(IcUser, { size: 16 }),
          /*#__PURE__*/React.createElement("span", null, "Admin"))), /*#__PURE__*/React.createElement("main", {
     className: "content"
-  }, children)), /*#__PURE__*/React.createElement("nav", {
+  }, vendoArquivo && /*#__PURE__*/React.createElement("div", {
+    className: "faixa-arquivo"
+  }, /*#__PURE__*/React.createElement("span", null,
+       "Você está vendo a ", /*#__PURE__*/React.createElement("strong", null, edicao.nome + ' ' + edicao.ano),
+       " — edição encerrada."),
+     /*#__PURE__*/React.createElement("button", {
+       onClick: () => verEdicao('')
+     }, "Voltar ao atual")), children)), /*#__PURE__*/React.createElement("nav", {
     className: "bottom-nav"
   }, /*#__PURE__*/React.createElement("div", {
     className: "bn-items"
@@ -5805,6 +6001,158 @@ function Calendario() {
     )
   );
 }
+// ── Edições ───────────────────────────────────────────────────────────────────
+function Edicoes() {
+  const { edicao, edicaoAtual, edicoes, verId, vendoArquivo, verEdicao,
+          edCarregando, edErro, isAdminReal, encerrarEdicao, novaEdicao, state } = useCopa();
+  const [busy, setBusy] = React.useState('');
+  const [msg, setMsg] = React.useState(null);
+  const [form, setForm] = React.useState(null);
+
+  const tituloBlk = t => React.createElement("div", {
+    style: { background: 'var(--bg2)', border: '1px solid var(--bg4)', borderRadius: 10,
+      padding: '12px 16px', textAlign: 'center', marginBottom: 4 }
+  }, React.createElement("div", { className: "section-title", style: { margin: 0, textAlign: 'center' } }, t));
+
+  const linha = (rotulo, valor) => React.createElement("div", {
+    style: { display: 'flex', gap: 8, padding: '6px 0', borderBottom: '1px solid var(--bg4)' }
+  }, React.createElement("span", { style: { fontSize: 10, fontWeight: 700, color: 'var(--gold)',
+      textTransform: 'uppercase', letterSpacing: '.06em', width: 80, flexShrink: 0, paddingTop: 2 } }, rotulo),
+     React.createElement("span", { style: { flex: 1, fontSize: 13, color: 'var(--text)' } }, valor));
+
+  const abrirForm = () => setForm({
+    ano: (edicaoAtual.ano || 2026) + 1,
+    nome: '',
+    trazerAtletas: false,
+    academias: (state.academias || []).map(a => ({ id: a.id, nome: a.nome, capitao: a.capitao || '' }))
+  });
+
+  const encerrar = async () => {
+    if (!window.confirm('Encerrar "' + edicaoAtual.nome + ' ' + edicaoAtual.ano +
+      '" e guardá-la no histórico?\n\nOs resultados ficam congelados e passam a ser somente leitura.')) return;
+    setBusy('encerrar'); setMsg(null);
+    const r = await encerrarEdicao();
+    setBusy('');
+    setMsg(r.ok
+      ? { tipo: 'ok', txt: 'Edição arquivada. Campeã: ' + (r.campea || '—') + '.' }
+      : { tipo: 'erro', txt: r.msg });
+  };
+
+  const criar = () => {
+    const comNome = form.academias.filter(a => a.nome && a.nome.trim());
+    if (comNome.length < 2) { setMsg({ tipo: 'erro', txt: 'Informe ao menos duas academias.' }); return; }
+    if (!window.confirm('Criar a edição ' + form.ano + ' com ' + comNome.length + ' academias?\n\n' +
+      'A edição atual já está arquivada e continuará acessível pelo histórico.')) return;
+    novaEdicao(form);
+    setForm(null); setMsg({ tipo: 'ok', txt: 'Edição ' + form.ano + ' criada. Ajuste os grupos no menu Grupos.' });
+  };
+
+  const upAcad = (i, campo, val) => setForm(f => {
+    const acs = f.academias.slice();
+    acs[i] = Object.assign({}, acs[i], { [campo]: val });
+    return Object.assign({}, f, { academias: acs });
+  });
+
+  return React.createElement("div", { className: "space" },
+    tituloBlk("🎾 EDIÇÕES DA COPA"),
+
+    edErro && React.createElement("div", { className: "alert alert-warn" },
+      React.createElement(IcAlert, { size: 14 }), React.createElement("div", null, edErro)),
+    edCarregando && React.createElement("div", { className: "alert" },
+      React.createElement(IcClock, { size: 14 }), React.createElement("div", null, "Carregando edição…")),
+    msg && React.createElement("div", { className: "alert " + (msg.tipo === 'ok' ? 'alert-green' : 'alert-warn') },
+      React.createElement(msg.tipo === 'ok' ? IcCheck : IcAlert, { size: 14 }),
+      React.createElement("div", null, msg.txt)),
+
+    React.createElement("div", { className: "card card-p" },
+      React.createElement("div", { className: "section-title" }, "Edição atual"),
+      linha("Nome", edicaoAtual.nome),
+      linha("Ano", String(edicaoAtual.ano)),
+      linha("Situação", edicaoAtual.encerrada ? "Encerrada — no histórico" : "Em andamento"),
+      vendoArquivo
+        ? React.createElement("button", { className: "btn btn-gold", style: { marginTop: 12, width: '100%' },
+            onClick: () => verEdicao('') }, "Voltar para a edição atual")
+        : React.createElement("div", { style: { fontSize: 12, color: 'var(--dim)', marginTop: 10 } },
+            "Você está vendo esta edição.")),
+
+    React.createElement("div", { className: "card card-p" },
+      React.createElement("div", { className: "section-title" }, "Edições encerradas"),
+      edicoes.length === 0
+        ? React.createElement("p", { style: { color: 'var(--dim)', fontSize: 13, margin: 0 } },
+            "Nenhuma edição arquivada ainda.")
+        : edicoes.map(e => React.createElement("div", { key: e.id,
+            style: { display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0',
+              borderBottom: '1px solid var(--bg4)' } },
+            React.createElement("div", { style: { flex: 1, minWidth: 0 } },
+              React.createElement("div", { style: { fontSize: 14, fontWeight: 600, color: 'var(--text)' } },
+                e.nome + ' ' + e.ano),
+              React.createElement("div", { style: { fontSize: 11, color: 'var(--dim)', marginTop: 2 } },
+                e.campea ? '🏆 ' + e.campea : 'Campeã não registrada')),
+            verId === e.id
+              ? React.createElement("span", { className: "badge badge-gray" }, "vendo")
+              : React.createElement("button", { className: "btn btn-sm",
+                  onClick: () => verEdicao(e.id) }, "Abrir")))),
+
+    isAdminReal && !vendoArquivo && React.createElement("div", { className: "card card-p" },
+      React.createElement("div", { className: "section-title" }, "Administração"),
+      !edicaoAtual.encerrada
+        ? React.createElement("div", null,
+            React.createElement("p", { style: { fontSize: 13, color: 'var(--muted)', marginTop: 0 } },
+              "Encerre a edição para guardá-la no histórico. Depois disso será possível abrir a próxima."),
+            React.createElement("button", { className: "btn btn-gold", style: { width: '100%' },
+              disabled: busy === 'encerrar', onClick: encerrar },
+              busy === 'encerrar' ? "Arquivando…" : "Encerrar edição e arquivar"))
+        : !form
+          ? React.createElement("div", null,
+              React.createElement("p", { style: { fontSize: 13, color: 'var(--muted)', marginTop: 0 } },
+                "Edição arquivada. Você pode abrir a próxima."),
+              React.createElement("button", { className: "btn btn-gold", style: { width: '100%' },
+                onClick: abrirForm }, "Criar nova edição"))
+          : React.createElement("div", null,
+              React.createElement("label", null, "Ano"),
+              React.createElement("input", { type: "number", value: form.ano,
+                onChange: e => setForm(f => Object.assign({}, f, { ano: parseInt(e.target.value) || f.ano })) }),
+              React.createElement("label", { style: { marginTop: 10 } }, "Nome (opcional)"),
+              React.createElement("input", { value: form.nome, placeholder: "Copa das Equipes",
+                onChange: e => setForm(f => Object.assign({}, f, { nome: e.target.value })) }),
+              React.createElement("div", { className: "section-title", style: { marginTop: 16 } }, "Academias"),
+              form.academias.map((a, i) => React.createElement("div", { key: i,
+                style: { display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 } },
+                React.createElement("input", { value: a.nome, placeholder: "Academia",
+                  style: { flex: 2, minWidth: 0 }, onChange: e => upAcad(i, 'nome', e.target.value) }),
+                React.createElement("input", { value: a.capitao, placeholder: "Capitão",
+                  style: { flex: 1, minWidth: 0 }, onChange: e => upAcad(i, 'capitao', e.target.value) }),
+                React.createElement("button", { className: "btn btn-sm", title: "Remover",
+                  onClick: () => setForm(f => Object.assign({}, f,
+                    { academias: f.academias.filter((_, k) => k !== i) })) },
+                  React.createElement(IcTrash, { size: 14 })))),
+              React.createElement("button", { className: "btn btn-sm", style: { marginTop: 4 },
+                onClick: () => setForm(f => Object.assign({}, f,
+                  { academias: f.academias.concat([{ nome: '', capitao: '' }]) })) },
+                "+ Acrescentar academia"),
+              React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 10,
+                marginTop: 16, cursor: 'pointer' },
+                onClick: () => setForm(f => Object.assign({}, f, { trazerAtletas: !f.trazerAtletas })) },
+                React.createElement("span", { style: { width: 18, height: 18, flexShrink: 0,
+                  borderRadius: 5, border: '1.5px solid ' + (form.trazerAtletas ? 'var(--gold)' : 'var(--bg5)'),
+                  background: form.trazerAtletas ? 'var(--gold)' : 'transparent',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center' } },
+                  form.trazerAtletas
+                    ? React.createElement(IcCheck, { size: 12, style: { color: '#14110a' } })
+                    : null),
+                React.createElement("span", { style: { fontSize: 13, color: 'var(--text)', lineHeight: 1.4 } },
+                  "Trazer também os atletas, com os mesmos grupos")),
+              React.createElement("p", { style: { fontSize: 12, color: 'var(--dim)' } },
+                form.trazerAtletas
+                  ? "A tabela de jogos é gerada automaticamente e todos os resultados começam zerados."
+                  : "A nova edição começa sem atletas; cadastre-os no menu Equipes e monte os grupos."),
+              React.createElement("div", { style: { display: 'flex', gap: 8, marginTop: 12 } },
+                React.createElement("button", { className: "btn btn-gold", style: { flex: 1 },
+                  onClick: criar }, "Criar edição " + form.ano),
+                React.createElement("button", { className: "btn", style: { flex: 1 },
+                  onClick: () => setForm(null) }, "Cancelar")))));
+}
+
 function App() {
   const [page, setPage] = React.useState('classificacao');
   React.useEffect(function () {
@@ -5823,7 +6171,8 @@ function App() {
     calendario: /*#__PURE__*/React.createElement(Calendario, null),
     regulamento: /*#__PURE__*/React.createElement(Regulamento, null),
     contatos: /*#__PURE__*/React.createElement(Contatos, null),
-    estatisticas: /*#__PURE__*/React.createElement(Estatisticas, null)
+    estatisticas: /*#__PURE__*/React.createElement(Estatisticas, null),
+    edicoes: /*#__PURE__*/React.createElement(Edicoes, null)
   };
   return /*#__PURE__*/React.createElement(CopaProvider, null, /*#__PURE__*/React.createElement(Layout, {
     page: page,
