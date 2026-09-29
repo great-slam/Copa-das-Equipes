@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<!-- Build: 20260928_0730 copa-gs-v9 -->
+<!-- Build: 20260928_0810 copa-gs-v9 -->
 <title>Copa das Equipes – Great Slam 2026</title>
 <meta property="og:title" content="Copa das Equipes – Great Slam 2026"/>
 <meta property="og:description" content="Acompanhe em tempo real a classificação, os resultados e os grupos da Copa das Equipes Great Slam 2026."/>
@@ -790,6 +790,31 @@ window._fbSalvarArquivo = async function(id, stateObj) {
     return true;
   } catch(e) { console.warn('[FB] arquivar:', e); return false; }
 };
+
+// ── Cadastro único de atletas (pessoas) ──────────────────────────────────
+// copa/atletas → { lista: [ {pid, nome, criadoEm} ] }
+// A pessoa é independente de edição, academia e categoria.
+
+window._fbGetBase = async function() {
+  var ok = await window._initFirebase();
+  if (!ok) return null;
+  try {
+    var snap = await window._fbDb.collection('copa').doc('atletas').get();
+    if (!snap.exists) return [];
+    return snap.data().lista || [];
+  } catch(e) { console.warn('[FB] base atletas:', e); return null; }
+};
+
+window._fbSalvarBase = async function(lista) {
+  var ok = await window._initFirebase();
+  if (!ok) return false;
+  try {
+    await window._fbDb.collection('copa').doc('atletas').set({ lista: lista });
+    try { localStorage.setItem('copa-gs-base', JSON.stringify(lista)); } catch(e) {}
+    console.log('[FB] Base de atletas salva:', lista.length);
+    return true;
+  } catch(e) { console.warn('[FB] salvar base:', e); return false; }
+};
 </script>
 <script>// Admin mode — Copa das Equipes Great Slam 2026
 window._fbListening = false;
@@ -1000,6 +1025,8 @@ const saveState = s => {
       .catch(function(e){ console.warn('[FB] Erro:', e); });
   }
 };
+const normNome = s => (s || '').toString().trim().toLowerCase()
+  .normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, ' ');
 const EDICAO_PADRAO = { id: '2026', nome: 'Copa das Equipes', ano: 2026, encerrada: false };
 const edicaoDe = s => s && s.edicao ? s.edicao : EDICAO_PADRAO;
 const PARES_RR = [[[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]]];
@@ -1161,6 +1188,75 @@ function CopaProvider({
     return false;
   };
   const logoutAdmin = () => { setIsAdmin(false); sessionStorage.removeItem('gs_admin'); window._fbAdminMode = false; };
+  // ── Cadastro único de atletas (pessoas), independente de edição ──
+  const [base, setBase] = React.useState(function () {
+    try { return JSON.parse(localStorage.getItem('copa-gs-base') || '[]'); } catch (e) { return []; }
+  });
+  const baseRef = React.useRef(null);
+  if (baseRef.current === null) baseRef.current = base;
+  const gravarBase = lista => {
+    baseRef.current = lista;
+    setBase(lista);
+    try { localStorage.setItem('copa-gs-base', JSON.stringify(lista)); } catch (e) {}
+    if (window._fbAdminMode && window._fbSalvarBase) window._fbSalvarBase(lista);
+  };
+  React.useEffect(function () {
+    if (!window._fbGetBase) return;
+    window._fbGetBase().then(function (l) {
+      if (!l) return;
+      baseRef.current = l;
+      setBase(l);
+      try { localStorage.setItem('copa-gs-base', JSON.stringify(l)); } catch (e) {}
+    });
+  }, []);
+  // Mesmo nome = mesma pessoa, ignorando acentos, caixa e espaços repetidos
+  const registrarPessoa = nome => {
+    const n = (nome || '').toString().trim();
+    if (!n) return null;
+    const chave = normNome(n);
+    const lista = baseRef.current || [];
+    const achou = lista.find(p => normNome(p.nome) === chave);
+    if (achou) return achou.pid;
+    const pid = 'p' + uid();
+    gravarBase(lista.concat([{ pid, nome: n, criadoEm: new Date().toISOString().slice(0, 10) }]));
+    return pid;
+  };
+  const renomearPessoa = (pid, nome) => {
+    const n = (nome || '').toString().trim();
+    if (!pid || !n) return;
+    const lista = baseRef.current || [];
+    if (!lista.some(p => p.pid === pid)) { gravarBase(lista.concat([{ pid, nome: n }])); return; }
+    gravarBase(lista.map(p => p.pid === pid ? _objectSpread(_objectSpread({}, p), {}, { nome: n }) : p));
+  };
+  // Unifica duas fichas da mesma pessoa (grafias diferentes)
+  const unificarPessoas = (pidFica, pidSai) => {
+    if (!pidFica || !pidSai || pidFica === pidSai) return;
+    gravarBase((baseRef.current || []).filter(p => p.pid !== pidSai));
+    commit(_objectSpread(_objectSpread({}, state), {}, {
+      atletas: state.atletas.map(a => a.pid === pidSai ? _objectSpread(_objectSpread({}, a), {}, { pid: pidFica }) : a)
+    }));
+  };
+  // Dá pid aos atletas da edição atual que ainda não têm
+  const migrarBase = () => {
+    let lista = baseRef.current || [];
+    let criadas = 0, vinculados = 0;
+    const novos = state.atletas.map(a => {
+      if (isBye(a)) return a.pid ? _objectSpread(_objectSpread({}, a), {}, { pid: null }) : a;
+      if (a.pid) return a;
+      const chave = normNome(a.nome);
+      let p = lista.find(x => normNome(x.nome) === chave);
+      if (!p) {
+        p = { pid: 'p' + uid(), nome: a.nome.trim(), criadoEm: new Date().toISOString().slice(0, 10) };
+        lista = lista.concat([p]);
+        criadas++;
+      }
+      vinculados++;
+      return _objectSpread(_objectSpread({}, a), {}, { pid: p.pid });
+    });
+    gravarBase(lista);
+    commit(_objectSpread(_objectSpread({}, state), {}, { atletas: novos }));
+    return { criadas, vinculados, total: lista.length };
+  };
   // ── Edições: índice, arquivo consultado, modo somente-leitura ──
   const [edicoes, setEdicoes] = React.useState(function () {
     try { return JSON.parse(localStorage.getItem('copa-gs-edicoes') || '[]'); } catch (e) { return []; }
@@ -1218,7 +1314,8 @@ function CopaProvider({
     acs.forEach(a => { validos[a.id] = true; });
     const ats = cfg.trazerAtletas
       ? state.atletas.filter(a => validos[a.academiId])
-          .map(a => ({ id: uid(), nome: a.nome, academiId: a.academiId, categoria: a.categoria,
+          .map(a => ({ id: uid(), pid: a.isBye ? null : (a.pid || registrarPessoa(a.nome)),
+            nome: a.nome, academiId: a.academiId, categoria: a.categoria,
             grupo: a.grupo, ordem: a.ordem, isBye: !!a.isBye,
             atStatus: a.isBye ? AT_STATUS.BYE : AT_STATUS.ATIVO }))
       : [];
@@ -1260,6 +1357,7 @@ function CopaProvider({
   const addAtleta = (nome, acadId, cat) => commit(_objectSpread(_objectSpread({}, state), {}, {
     atletas: [...state.atletas, {
       id: uid(),
+      pid: registrarPessoa(nome),
       nome,
       academiId: acadId,
       categoria: cat,
@@ -1280,11 +1378,16 @@ function CopaProvider({
   }));
 
   // Editar apenas nome (dados cadastrais)
-  const editarAtleta = (id, nome) => commit(_objectSpread(_objectSpread({}, state), {}, {
-    atletas: state.atletas.map(a => a.id === id ? _objectSpread(_objectSpread({}, a), {}, {
-      nome: nome.trim()
-    }) : a)
-  }));
+  const editarAtleta = (id, nome) => {
+    const at = state.atletas.find(a => a.id === id);
+    const pid = at && at.pid ? (renomearPessoa(at.pid, nome), at.pid) : registrarPessoa(nome);
+    commit(_objectSpread(_objectSpread({}, state), {}, {
+      atletas: state.atletas.map(a => a.id === id ? _objectSpread(_objectSpread({}, a), {}, {
+        nome: nome.trim(),
+        pid
+      }) : a)
+    }));
+  };
 
   // Substituir atleta completamente
   const substituirAtleta = (id, nome) => {
@@ -1294,8 +1397,10 @@ function CopaProvider({
       alert('1ª Rodada encerrada. Substituição não permitida.');
       return;
     }
+    const pidNovo = registrarPessoa(nome);
     const novos = state.atletas.map(a => a.id === id ? _objectSpread(_objectSpread({}, a), {}, {
       nome: nome.trim(),
+      pid: pidNovo,
       isBye: false,
       atStatus: AT_STATUS.ATIVO
     }) : a);
@@ -1326,6 +1431,7 @@ function CopaProvider({
     const acadNome = ((_state$academias$find = state.academias.find(a => a.id === at.academiId)) === null || _state$academias$find === void 0 ? void 0 : _state$academias$find.nome) || '?';
     const novos = state.atletas.map(a => a.id === id ? _objectSpread(_objectSpread({}, a), {}, {
       nome: `BYE – ${acadNome} – ${at.categoria}`,
+      pid: null,
       isBye: true,
       atStatus: AT_STATUS.BYE
     }) : a);
@@ -1350,8 +1456,10 @@ function CopaProvider({
       alert('1\xaa Rodada encerrada. Vaga n\xe3o pode ser substitu\xedda.');
       return;
     }
+    const pidNovo = registrarPessoa(nome);
     const novos = state.atletas.map(a => a.id === byeId ? _objectSpread(_objectSpread({}, a), {}, {
       nome: nome.trim(),
+      pid: pidNovo,
       isBye: false,
       atStatus: AT_STATUS.ATIVO
     }) : a);
@@ -1576,6 +1684,11 @@ function CopaProvider({
       encerrarEdicao,
       novaEdicao,
       regerarTabela,
+      base,
+      registrarPessoa,
+      renomearPessoa,
+      unificarPessoas,
+      migrarBase,
       loginAdmin,
       logoutAdmin,
       addAcademia,
@@ -1923,6 +2036,10 @@ function Layout({
     className: "nav-item",
     onClick: () => go('contatos')
   }, /*#__PURE__*/React.createElement(IcPhone, null), /*#__PURE__*/React.createElement("span", null, "Contatos")),
+  isAdmin && /*#__PURE__*/React.createElement("div", {
+    className: "nav-item" + (page === 'baseatletas' ? ' active' : ''),
+    onClick: () => go('baseatletas')
+  }, /*#__PURE__*/React.createElement(IcUser, null), /*#__PURE__*/React.createElement("span", null, "Base de atletas")),
   /*#__PURE__*/React.createElement("div", {
     className: "nav-item" + (page === 'edicoes' ? ' active' : ''),
     onClick: () => go('edicoes')
@@ -6153,6 +6270,122 @@ function Edicoes() {
                   onClick: () => setForm(null) }, "Cancelar")))));
 }
 
+// ── Base de atletas (pessoas, entre edições) ──────────────────────────────────
+function BaseAtletas() {
+  const { base, state, edicao, edicaoAtual, edicoes, isAdminReal,
+          migrarBase, unificarPessoas } = useCopa();
+  const [busca, setBusca] = React.useState('');
+  const [arquivos, setArquivos] = React.useState({});
+  const [msg, setMsg] = React.useState(null);
+  const [unif, setUnif] = React.useState(null);
+
+  React.useEffect(function () {
+    edicoes.forEach(function (e) {
+      if (arquivos[e.id] || !window._fbGetArquivo) return;
+      window._fbGetArquivo(e.id).then(function (st) {
+        if (st) setArquivos(function (a) { return Object.assign({}, a, { [e.id]: st }); });
+      });
+    });
+  }, [edicoes]);
+
+  // Cada pessoa e onde ela jogou, edição por edição
+  const porPid = {};
+  const registra = (st, ed) => {
+    const acad = {};
+    (st.academias || []).forEach(a => { acad[a.id] = a.nome; });
+    (st.atletas || []).forEach(a => {
+      if (!a.pid) return;
+      (porPid[a.pid] = porPid[a.pid] || []).push({
+        ano: ed.ano, academia: acad[a.academiId] || '?', categoria: a.categoria
+      });
+    });
+  };
+  registra(state, edicao);
+  edicoes.forEach(e => { if (arquivos[e.id] && e.id !== edicao.id) registra(arquivos[e.id], e); });
+
+  const pessoas = base.map(p => {
+    const hist = (porPid[p.pid] || []).slice().sort((a, b) => b.ano - a.ano);
+    const academias = Array.from(new Set(hist.map(h => h.academia)));
+    return Object.assign({}, p, { hist, migrou: academias.length > 1 });
+  }).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+
+  const filtro = normNome(busca);
+  const vistas = filtro ? pessoas.filter(p => normNome(p.nome).indexOf(filtro) >= 0) : pessoas;
+  const semPid = state.atletas.filter(a => !a.pid && !isBye(a)).length;
+  const migrados = pessoas.filter(p => p.migrou).length;
+
+  const migrar = () => {
+    const r = migrarBase();
+    setMsg({ tipo: 'ok', txt: r.vinculados + ' atletas vinculados à base. ' +
+      r.criadas + ' fichas novas criadas — a base tem ' + r.total + ' pessoas.' });
+  };
+
+  const fazerUnificacao = pidSai => {
+    const a = base.find(p => p.pid === unif), b = base.find(p => p.pid === pidSai);
+    if (!a || !b) return;
+    if (!window.confirm('Unificar "' + b.nome + '" em "' + a.nome + '"?\n\n' +
+      'A ficha de "' + b.nome + '" é removida e o histórico passa para "' + a.nome + '".')) return;
+    unificarPessoas(unif, pidSai);
+    setUnif(null);
+    setMsg({ tipo: 'ok', txt: 'Fichas unificadas em "' + a.nome + '".' });
+  };
+
+  return React.createElement("div", { className: "space" },
+    React.createElement("div", {
+      style: { background: 'var(--bg2)', border: '1px solid var(--bg4)', borderRadius: 10,
+        padding: '12px 16px', textAlign: 'center', marginBottom: 4 }
+    }, React.createElement("div", { className: "section-title", style: { margin: 0, textAlign: 'center' } },
+      "🎾 BASE DE ATLETAS")),
+
+    msg && React.createElement("div", { className: "alert alert-green" },
+      React.createElement(IcCheck, { size: 14 }), React.createElement("div", null, msg.txt)),
+
+    React.createElement("div", { className: "card card-p" },
+      React.createElement("div", { style: { display: 'flex', gap: 12, textAlign: 'center' } },
+        [[base.length, 'pessoas'], [edicoes.length + 1, 'edições'], [migrados, 'mudaram de academia']]
+          .map((x, i) => React.createElement("div", { key: i, style: { flex: 1 } },
+            React.createElement("div", { style: { fontSize: 22, fontWeight: 700, color: 'var(--gold)' } }, x[0]),
+            React.createElement("div", { style: { fontSize: 10.5, color: 'var(--dim)', textTransform: 'uppercase',
+              letterSpacing: '.05em', marginTop: 2 } }, x[1])))),
+      isAdminReal && semPid > 0 && React.createElement("div", { style: { marginTop: 14 } },
+        React.createElement("p", { style: { fontSize: 13, color: 'var(--muted)', marginTop: 0 } },
+          semPid + " atletas desta edição ainda não estão ligados à base."),
+        React.createElement("button", { className: "btn btn-gold", style: { width: '100%' },
+          onClick: migrar }, "Vincular à base de atletas"))),
+
+    React.createElement("div", { className: "card card-p" },
+      React.createElement("input", { value: busca, placeholder: "Procurar atleta…",
+        onChange: e => setBusca(e.target.value) }),
+      vistas.length === 0
+        ? React.createElement("p", { style: { color: 'var(--dim)', fontSize: 13 } },
+            base.length === 0 ? "A base ainda está vazia." : "Nenhum atleta com esse nome.")
+        : vistas.map(p => React.createElement("div", { key: p.pid,
+            style: { padding: '10px 0', borderBottom: '1px solid var(--bg4)' } },
+            React.createElement("div", { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+              React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 13.5, fontWeight: 600,
+                color: 'var(--text)' } }, p.nome),
+              p.migrou && React.createElement("span", { className: "badge badge-yellow" }, "mudou"),
+              isAdminReal && React.createElement("button", { className: "btn btn-sm",
+                onClick: () => setUnif(unif === p.pid ? null : p.pid) },
+                unif === p.pid ? "cancelar" : "unificar")),
+            p.hist.length === 0
+              ? React.createElement("div", { style: { fontSize: 11.5, color: 'var(--dim)', marginTop: 3 } },
+                  "Sem participação registrada")
+              : React.createElement("div", { style: { display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 5 } },
+                  p.hist.map((h, i) => React.createElement("span", { key: i,
+                    style: { fontSize: 11, color: 'var(--muted)', background: 'var(--bg3)',
+                      border: '1px solid var(--bg4)', borderRadius: 999, padding: '3px 9px' } },
+                    React.createElement("strong", { style: { color: 'var(--gold)' } }, h.ano),
+                    " · " + h.academia + " · " + h.categoria))),
+            unif === p.pid && React.createElement("div", { style: { marginTop: 8 } },
+              React.createElement("label", null, "Unificar qual ficha nesta?"),
+              React.createElement("select", { value: "",
+                onChange: e => e.target.value && fazerUnificacao(e.target.value) },
+                React.createElement("option", { value: "" }, "— selecionar —"),
+                pessoas.filter(o => o.pid !== p.pid).map(o =>
+                  React.createElement("option", { key: o.pid, value: o.pid }, o.nome)))))))); 
+}
+
 function App() {
   const [page, setPage] = React.useState('classificacao');
   React.useEffect(function () {
@@ -6172,7 +6405,8 @@ function App() {
     regulamento: /*#__PURE__*/React.createElement(Regulamento, null),
     contatos: /*#__PURE__*/React.createElement(Contatos, null),
     estatisticas: /*#__PURE__*/React.createElement(Estatisticas, null),
-    edicoes: /*#__PURE__*/React.createElement(Edicoes, null)
+    edicoes: /*#__PURE__*/React.createElement(Edicoes, null),
+    baseatletas: /*#__PURE__*/React.createElement(BaseAtletas, null)
   };
   return /*#__PURE__*/React.createElement(CopaProvider, null, /*#__PURE__*/React.createElement(Layout, {
     page: page,
